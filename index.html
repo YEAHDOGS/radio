@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dogs Radio: 24/7 community radio from playlists</title>
+<meta name="description" content="Community radio stations built from Spotify playlists. Everyone hears the same song at the same time. Edge-native, no servers.">
+<link rel="canonical" href="https://yeahdogs.github.io/radio/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Dogs Radio">
+<meta property="og:title" content="Dogs Radio: 24/7 community radio from playlists">
+<meta property="og:description" content="Community radio stations built from Spotify playlists. Everyone hears the same song at the same time.">
+<meta property="og:url" content="https://yeahdogs.github.io/radio/">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#0a0a0c">
+<style>
+:root{
+  --bg:#0a0a0c; --ink:#f2ede3; --mut:#a8a094; --dim:#5c574c;
+  --amber:#ffb03a; --red:#ff453a; --line:#232227;
+  --max:560px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg); color:var(--ink);
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  line-height:1.55; -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+.mono{font-family:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace}
+a{color:inherit}
+
+/* top bar */
+.topbar{
+  position:sticky; top:0; z-index:20;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:14px 20px;
+  background:rgba(10,10,12,.82); backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--line);
+}
+.wordmark{font-weight:800; letter-spacing:.14em; font-size:14px; text-transform:uppercase}
+.wordmark b{color:var(--amber)}
+.onair{display:flex; align-items:center; gap:8px; font-size:11px; letter-spacing:.22em; color:var(--mut); text-transform:uppercase}
+.dot{width:9px; height:9px; border-radius:50%; background:var(--red);
+  box-shadow:0 0 12px 2px rgba(255,69,58,.85); animation:pulse 1.6s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+
+/* hero */
+.hero{padding:64px 20px 0; max-width:var(--max); margin:0 auto}
+.kicker{font-size:11px; letter-spacing:.28em; color:var(--dim); text-transform:uppercase; margin-bottom:18px}
+h1{font-size:clamp(46px,13vw,84px); line-height:.95; font-weight:800; letter-spacing:-.02em; text-transform:uppercase}
+h1 .amber{color:var(--amber)}
+.lede{margin-top:20px; font-size:17px; color:var(--mut); max-width:40ch}
+.lede strong{color:var(--ink); font-weight:600}
+.ctas{display:flex; gap:12px; margin-top:28px; flex-wrap:wrap}
+.btn{
+  display:inline-block; padding:14px 22px; font-size:14px; font-weight:700;
+  letter-spacing:.04em; text-decoration:none; border-radius:10px;
+  transition:transform .18s ease, background .18s ease, color .18s ease;
+  will-change:transform;
+}
+.btn:active{transform:scale(.97)}
+.btn-solid{background:var(--amber); color:#14100a}
+.btn-solid:hover{background:#ffc25e}
+.btn-ghost{border:1px solid #3a382f; color:var(--ink)}
+.btn-ghost:hover{border-color:var(--amber); color:var(--amber)}
+
+.eq-wrap{margin:44px -20px 0; position:relative}
+canvas#eq{display:block; width:100%; height:170px}
+.eq-cap{display:flex; justify-content:space-between; padding:10px 20px 0;
+  font-size:10px; letter-spacing:.24em; color:var(--dim); text-transform:uppercase}
+
+/* tuner */
+.tuner{margin:52px 0 0; border-top:1px solid var(--line); border-bottom:1px solid var(--line);
+  background:#0d0d10; overflow:hidden; user-select:none; touch-action:pan-y}
+.tuner-head{display:flex; justify-content:space-between; align-items:baseline;
+  padding:14px 20px 6px; font-size:11px; letter-spacing:.22em; color:var(--dim); text-transform:uppercase}
+.readout{font-size:22px; color:var(--amber); letter-spacing:.06em}
+.dial{position:relative; height:86px; cursor:grab}
+.dial:active{cursor:grabbing}
+.track{position:absolute; top:0; left:0; height:100%; will-change:transform}
+.tick{position:absolute; top:26px; width:1px; height:14px; background:#3a382f}
+.tick.major{height:26px; top:20px; background:#6b6455}
+.ticklbl{position:absolute; top:52px; transform:translateX(-50%); font-size:10px; color:var(--dim); letter-spacing:.08em}
+.needle{position:absolute; left:50%; top:8px; bottom:8px; width:2px; background:var(--red);
+  box-shadow:0 0 10px rgba(255,69,58,.7); transform:translateX(-50%); pointer-events:none}
+.tuner-hint{padding:0 20px 14px; font-size:11px; color:var(--dim); letter-spacing:.06em}
+
+/* sections */
+section.block{max-width:var(--max); margin:0 auto; padding:64px 20px 0}
+.secnum{font-size:12px; letter-spacing:.3em; color:var(--dim); margin-bottom:14px}
+h2{font-size:clamp(28px,7.5vw,40px); font-weight:800; letter-spacing:-.01em; line-height:1.05; text-transform:uppercase}
+.beat{margin-top:40px; padding-top:28px; border-top:1px solid var(--line)}
+.beat:nth-of-type(odd){margin-left:0}
+.beat h3{font-size:20px; font-weight:750; margin-bottom:10px}
+.beat h3 .n{color:var(--amber); margin-right:10px; font-size:14px; vertical-align:2px}
+.beat p{color:var(--mut); font-size:15.5px}
+.beat p strong{color:var(--ink); font-weight:600}
+
+.engine{margin-top:44px; padding:26px 22px; border:1px solid var(--line); border-radius:14px; background:#0e0e11}
+.engine h3{font-size:13px; letter-spacing:.24em; text-transform:uppercase; color:var(--amber); margin-bottom:12px}
+.engine ul{list-style:none}
+.engine li{padding:9px 0; border-top:1px solid #1c1c20; font-size:14.5px; color:var(--mut)}
+.engine li:first-child{border-top:none}
+.engine li b{color:var(--ink); font-weight:650}
+
+.status{margin-top:56px; padding:30px 22px; border-radius:14px;
+  background:linear-gradient(180deg, rgba(255,176,58,.10), rgba(255,176,58,.03));
+  border:1px solid rgba(255,176,58,.35)}
+.status h3{font-size:22px; font-weight:800; text-transform:uppercase; letter-spacing:.02em}
+.status p{margin-top:10px; color:var(--mut); font-size:15px}
+.status .ctas{margin-top:20px}
+
+/* faq */
+.faq-item{border-top:1px solid var(--line); padding:20px 0}
+.faq-item:last-child{border-bottom:1px solid var(--line)}
+.faq-item h3{font-size:16px; font-weight:700; margin-bottom:8px}
+.faq-item p{color:var(--mut); font-size:14.5px}
+
+/* footer */
+footer{margin-top:72px; border-top:1px solid var(--line); padding:32px 20px 96px}
+.foot-inner{max-width:var(--max); margin:0 auto}
+.madeby{font-size:14px; margin-bottom:18px}
+.madeby a{color:var(--amber); text-decoration:none; font-weight:600}
+.foot-links{display:flex; gap:20px; flex-wrap:wrap; font-size:13px; color:var(--mut)}
+.foot-links a{text-decoration:none}
+.foot-links a:hover{color:var(--amber)}
+.nocookies{margin-top:18px; font-size:12px; color:var(--dim); letter-spacing:.04em}
+
+/* sticky mobile cta */
+.sticky-cta{position:fixed; left:12px; right:12px; bottom:12px; z-index:30; display:none}
+.sticky-cta a{display:block; text-align:center; background:var(--amber); color:#14100a;
+  font-weight:800; padding:15px; border-radius:12px; text-decoration:none; font-size:15px}
+@media (max-width:640px){ .sticky-cta{display:block} }
+
+/* reveal */
+.rv{opacity:0; transform:translateY(18px); transition:opacity .55s ease, transform .55s ease}
+.rv.in{opacity:1; transform:none}
+
+@media (min-width:900px){
+  :root{--max:760px}
+  h1{font-size:96px}
+  canvas#eq{height:220px}
+  .beat{margin-left:120px}
+  .beat:nth-of-type(even){margin-left:0; margin-right:120px}
+}
+
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation:none!important; transition:none!important}
+  html{scroll-behavior:auto}
+  .rv{opacity:1; transform:none}
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="wordmark"><b>DOGS</b> RADIO</div>
+  <div class="onair"><span class="dot" aria-hidden="true"></span><span>On air</span></div>
+</header>
+
+<main>
+  <div class="hero">
+    <p class="kicker">Community radio, rebuilt for the edge</p>
+    <h1>Dogs<br><span class="amber">Radio</span></h1>
+    <p class="lede">Stations built from <strong>Spotify playlists</strong>. Everyone listening hears the <strong>same song at the same time</strong>. True radio, no servers.</p>
+    <div class="ctas">
+      <a class="btn btn-solid" href="https://github.com/YEAHDOGS/radio">Follow the build</a>
+      <a class="btn btn-ghost" href="#how">How it works</a>
+    </div>
+  </div>
+
+  <div class="eq-wrap" aria-hidden="true">
+    <canvas id="eq"></canvas>
+    <div class="eq-cap mono"><span>live spectrum</span><span>ch 01</span></div>
+  </div>
+
+  <div class="tuner" id="tuner" aria-hidden="true">
+    <div class="tuner-head"><span>FM dial</span><span class="readout mono" id="readout">94.7</span></div>
+    <div class="dial" id="dial"><div class="track" id="track"></div><div class="needle"></div></div>
+    <p class="tuner-hint">Drag the dial. Static is free.</p>
+  </div>
+
+  <section class="block" id="how">
+    <p class="secnum mono">01 / How it works</p>
+    <h2 class="rv">Three parts.<br>One broadcast.</h2>
+
+    <div class="beat rv">
+      <h3><span class="n mono">A</span>A station is a playlist</h3>
+      <p>Bring a Spotify playlist and it becomes a station. The music is the programming.</p>
+    </div>
+    <div class="beat rv">
+      <h3><span class="n mono">B</span>Everyone hears the same thing</h3>
+      <p>One persistent cursor drives each station. When the track changes, it changes for <strong>everyone listening</strong>. Not personal playback. Radio.</p>
+    </div>
+    <div class="beat rv">
+      <h3><span class="n mono">C</span>Chat on the air</h3>
+      <p>Live chat sits in the same room as the music. The crowd is part of the broadcast.</p>
+    </div>
+  </section>
+
+  <section class="block" id="engine">
+    <p class="secnum mono">02 / The engine</p>
+    <h2 class="rv">No servers.</h2>
+    <div class="engine rv">
+      <h3>Cloudflare-native</h3>
+      <ul>
+        <li><b>Durable Objects</b> — one per station. It owns the now-playing cursor, the alarm that advances it, and the chat.</li>
+        <li><b>Workers</b> — the API. No processes to babysit.</li>
+        <li><b>D1</b> — stations, users, chat history.</li>
+        <li><b>Svelte 5</b> — the player, on Pages.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="block" id="faq">
+    <p class="secnum mono">03 / Questions</p>
+    <h2 class="rv">Fine print, short.</h2>
+    <div class="faq-item rv">
+      <h3>When does it launch?</h3>
+      <p>The architecture is written. The build is next. This page goes live when the first station does.</p>
+    </div>
+    <div class="faq-item rv">
+      <h3>Do I need Spotify?</h3>
+      <p>Still being tuned. Either Spotify Premium playback, or 30-second previews with no login at all.</p>
+    </div>
+    <div class="faq-item rv">
+      <h3>Can I run my own station?</h3>
+      <p>Undecided: open stations for everyone, or curated DJs. The dial leans open.</p>
+    </div>
+    <div class="faq-item rv">
+      <h3>Is the chat saved?</h3>
+      <p>Undecided. Live for sure; history is an open question.</p>
+    </div>
+    <div class="faq-item rv">
+      <h3>Who makes this?</h3>
+      <p>DOGS. One small team, one loud idea.</p>
+    </div>
+  </section>
+
+  <section class="block" id="status">
+    <div class="status rv">
+      <h3>In the studio</h3>
+      <p>Architecture written. Build next. Watch the repo if you want the first spin.</p>
+      <div class="ctas">
+        <a class="btn btn-solid" href="https://github.com/YEAHDOGS/radio">Follow the build</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="foot-inner">
+    <p class="madeby">This product was made by <a href="https://wearedogs.net">DOGS</a></p>
+    <nav class="foot-links" aria-label="Footer">
+      <a href="privacy.html">Privacy</a>
+      <a href="terms.html">Terms</a>
+      <a href="https://github.com/YEAHDOGS/radio">GitHub</a>
+      <a href="https://github.com/YEAHDOGS/radio/issues">Questions</a>
+    </nav>
+    <p class="nocookies mono">No cookies. No tracking. No accounts.</p>
+  </div>
+</footer>
+
+<div class="sticky-cta"><a href="https://github.com/YEAHDOGS/radio">Follow the build</a></div>
+
+<script>
+(function(){
+  "use strict";
+  var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* equalizer: one canvas, pausable, cheap */
+  var cv = document.getElementById("eq"), ctx = cv.getContext("2d");
+  var N = 56, bars = [], raf = null, running = false;
+  for (var i = 0; i < N; i++) bars.push({v: Math.random(), s: 0.02 + Math.random() * 0.09, p: Math.random() * 6.28});
+  function sizeEq(){
+    var r = cv.getBoundingClientRect(), d = Math.min(window.devicePixelRatio || 1, 2);
+    cv.width = r.width * d; cv.height = r.height * d; ctx.setTransform(d, 0, 0, d, 0, 0);
+  }
+  function drawEq(t){
+    if (!running) return;
+    var r = cv.getBoundingClientRect(), W = r.width, H = r.height;
+    ctx.clearRect(0, 0, W, H);
+    var bw = W / N;
+    for (var i = 0; i < N; i++){
+      var b = bars[i];
+      var target = 0.12 + 0.88 * Math.abs(Math.sin(t * b.s + b.p) * Math.sin(t * b.s * 0.37 + b.p * 1.7));
+      b.v += (target - b.v) * 0.18;
+      var h = b.v * H * 0.92, x = i * bw + bw * 0.22, w = bw * 0.56;
+      var g = ctx.createLinearGradient(0, H - h, 0, H);
+      g.addColorStop(0, "#ffb03a"); g.addColorStop(1, "rgba(255,176,58,.12)");
+      ctx.fillStyle = g;
+      ctx.fillRect(x, H - h, w, h);
+    }
+    raf = requestAnimationFrame(drawEq);
+  }
+  function startEq(){ if (running || reduced) { if (reduced) drawStatic(); return; } running = true; raf = requestAnimationFrame(drawEq); }
+  function stopEq(){ running = false; if (raf) cancelAnimationFrame(raf); raf = null; }
+  function drawStatic(){
+    var r = cv.getBoundingClientRect(), W = r.width, H = r.height, bw = W / N;
+    ctx.clearRect(0, 0, W, H);
+    for (var i = 0; i < N; i++){
+      var h = (0.15 + 0.7 * Math.abs(Math.sin(i * 0.9))) * H * 0.8;
+      ctx.fillStyle = "rgba(255,176,58,.55)";
+      ctx.fillRect(i * bw + bw * 0.22, H - h, bw * 0.56, h);
+    }
+  }
+  sizeEq(); window.addEventListener("resize", sizeEq);
+  if ("IntersectionObserver" in window){
+    new IntersectionObserver(function(es){
+      es.forEach(function(e){ e.isIntersecting ? startEq() : stopEq(); });
+    }, {threshold: 0}).observe(cv);
+  } else { startEq(); }
+
+  /* tuner dial: drag to tune, transform-only */
+  var dial = document.getElementById("dial"), track = document.getElementById("track"),
+      readout = document.getElementById("readout");
+  var FMIN = 88.1, FMAX = 107.9, TRACK_W = 2600, x = 0.32 * TRACK_W;
+  var i2;
+  for (i2 = 0; i2 <= TRACK_W; i2 += 20){
+    var major = (i2 % 100 === 0), el = document.createElement("div");
+    el.className = "tick" + (major ? " major" : "");
+    el.style.left = i2 + "px";
+    track.appendChild(el);
+    if (major){
+      var f = FMIN + (i2 / TRACK_W) * (FMAX - FMIN), lb = document.createElement("div");
+      lb.className = "ticklbl mono"; lb.style.left = i2 + "px";
+      lb.textContent = f.toFixed(1);
+      track.appendChild(lb);
+    }
+  }
+  function render(){
+    var vw = dial.clientWidth, max = TRACK_W - vw;
+    x = Math.max(0, Math.min(max, x));
+    track.style.transform = "translateX(" + (-x) + "px)";
+    var f = FMIN + ((x + vw / 2) / TRACK_W) * (FMAX - FMIN);
+    readout.textContent = f.toFixed(1);
+  }
+  var drag = null;
+  dial.addEventListener("pointerdown", function(e){ drag = {x: e.clientX, sx: x}; dial.setPointerCapture(e.pointerId); });
+  dial.addEventListener("pointermove", function(e){ if (drag){ x = drag.sx - (e.clientX - drag.x); render(); } });
+  ["pointerup","pointercancel"].forEach(function(ev){ dial.addEventListener(ev, function(){ drag = null; }); });
+  window.addEventListener("resize", render);
+  render();
+
+  /* scroll reveals: opacity/transform only */
+  var rvs = document.querySelectorAll(".rv");
+  if ("IntersectionObserver" in window && !reduced){
+    var io = new IntersectionObserver(function(es){
+      es.forEach(function(e){ if (e.isIntersecting){ e.target.classList.add("in"); io.unobserve(e.target); } });
+    }, {threshold: 0.12});
+    rvs.forEach(function(el){ io.observe(el); });
+  } else {
+    rvs.forEach(function(el){ el.classList.add("in"); });
+  }
+})();
+</script>
+</body>
+</html>
