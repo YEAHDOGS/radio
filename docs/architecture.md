@@ -1,6 +1,6 @@
 # Dogs Radio — Architecture
 
-Rebuild of `cptnbrando/am_radio` (Spring Boot 2.5.1 + Angular 12 + AWS RDS + EC2),
+Rebuild of the original am_radio (Spring Boot 2.5.1 + Angular 12 + AWS RDS + EC2, 2024),
 moving entirely to Cloudflare infrastructure.
 
 ## What am_radio did
@@ -34,7 +34,7 @@ single-process, died with the server. A Durable Object is that thread, but
 persistent and global — one object per station owns the track cursor, the alarm
 that advances it, and the WebSocket fan-out for chat + now-playing sync.
 
-## Open questions (for Brandon)
+## Open questions
 
 - Station creation: anyone can spin up a station, or curated DJs only?
 - Playback: Spotify Web Playback SDK (requires listeners to have Spotify Premium)
