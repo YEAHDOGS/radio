@@ -1,8 +1,8 @@
 # Dogs Radio
 
-24/7 community radio stations built from Spotify playlists — hosted by the founder.
+24/7 community radio stations built from Spotify playlists — hosted by DOGS.
 
-A Cloudflare-native rebuild of [am_radio](https://github.com/REDACTED/am_radio)
+A Cloudflare-native rebuild of am_radio
 (Spring Boot + Angular + AWS RDS/EC2, 2024). Same soul — shared stations, live
 chatrooms, visualizer — none of the servers.
 
@@ -21,4 +21,4 @@ See [docs/architecture.md](docs/architecture.md) for the full old → new mappin
 
 ## Status
 
-Scaffold + architecture. Implementation starts after user's demo video lands.
+Scaffold + architecture. Implementation starts after the demo video lands.
