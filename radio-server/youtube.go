@@ -20,6 +20,12 @@ type ytResolver struct {
 }
 
 func (y *ytResolver) resolve(title string, artists []string) string {
+	return y.resolveCounted(title, artists, func() {})
+}
+
+// resolveCounted is resolve, but calls count() once per uncached API
+// search so callers (the converter) can track quota spend.
+func (y *ytResolver) resolveCounted(title string, artists []string, count func()) string {
 	if y.key == "" {
 		return ""
 	}
@@ -30,6 +36,7 @@ func (y *ytResolver) resolve(title string, artists []string) string {
 		return v
 	}
 	y.mu.Unlock()
+	count()
 	vid := y.search(q)
 	y.mu.Lock()
 	y.cache[q] = vid

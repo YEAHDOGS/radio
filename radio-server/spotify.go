@@ -112,13 +112,19 @@ func (s *spotifyClient) nowPlaying() (*nowPlayingOut, error) {
 	return &nowPlayingOut{Playing: body.IsPlaying, ProgressMs: body.ProgressMs, Track: body.Item}, nil
 }
 
-// playlistTracks pulls every track from a Spotify playlist (paginated).
-// Used by the auto-DJ pool. Skips local files and unplayable entries.
+// playlistTracks pulls every track from a Spotify playlist (paginated)
+// with the owner's token. Used by the auto-DJ pool.
 func (s *spotifyClient) playlistTracks(id string) ([]djTrack, error) {
 	tok, err := s.accessToken()
 	if err != nil {
 		return nil, err
 	}
+	return s.playlistTracksWith(tok, id)
+}
+
+// playlistTracksWith is playlistTracks for an arbitrary bearer token —
+// used by the converter with the visitor's own token.
+func (s *spotifyClient) playlistTracksWith(tok string, id string) ([]djTrack, error) {
 	var out []djTrack
 	offset := 0
 	for {

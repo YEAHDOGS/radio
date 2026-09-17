@@ -91,3 +91,30 @@ plays anything on Spotify, live cuts back in.
 - `.env.local` is gitignored — the refresh token never leaves the server.
 - Listeners hear the YouTube audio; metadata (title/artists/art) comes
   from Spotify. Track changes cut over within ~1–2 seconds.
+
+## Playlist converter (Spotify <-> YouTube)
+
+An app on the radio site (`/convert.html`) that copies a playlist
+between Spotify and YouTube in either direction, using each visitor's
+own accounts — no shared credentials.
+
+- `GET /c/status` — which accounts the visitor has connected.
+- `/c/auth/spotify/login` + `/c/auth/google/login` — per-user OAuth.
+  Spotify needs `playlist-read-private playlist-modify-*`; Google needs
+  the `youtube.force-ssl` scope (a sensitive scope: in testing mode the
+  consent screen covers 100 users; publishing needs Google verification).
+- `POST /c/convert` `{direction, source_id, name}` — starts a job.
+- `GET /c/jobs/:id` — `{state, total, done, failed[], result_url}`.
+
+YouTube quota guard: the default 10k units/day only converts ~60 tracks
+(search=100 + insert=50 each). The server tracks daily spend in memory
+and refuses jobs that would blow the budget instead of dying halfway.
+Cached repeat searches cost nothing.
+
+Notes:
+
+- There is no official YouTube Music API; conversions target regular
+  YouTube playlists, which open and play inside the YouTube Music app.
+- Google requires an `https://` OAuth redirect (localhost excepted), so
+  set `PUBLIC_URL=https://radio-api.dogs.red` before creating the
+  Google OAuth client.

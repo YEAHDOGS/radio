@@ -32,6 +32,9 @@ type config struct {
 	YoutubeKey          string
 	AutoDJPlaylists     string // comma-separated Spotify playlist IDs for the auto-DJ pool
 	AutoDJIdleSecs      int    // seconds of Spotify silence before the DJ takes over
+	GoogleClientID      string // converter: Google OAuth client
+	GoogleClientSecret  string
+	ConvertSessSecret   string // converter: session cookie HMAC secret (random per boot if empty)
 }
 
 func getenv(key, def string) string {
@@ -71,6 +74,9 @@ func loadConfig() *config {
 		YoutubeKey:          os.Getenv("YOUTUBE_API_KEY"),
 		AutoDJPlaylists:     os.Getenv("AUTODJ_PLAYLISTS"),
 		AutoDJIdleSecs:      idleSecs,
+		GoogleClientID:      os.Getenv("GOOGLE_CLIENT_ID"),
+		GoogleClientSecret:  os.Getenv("GOOGLE_CLIENT_SECRET"),
+		ConvertSessSecret:   os.Getenv("CONVERT_SESSION_SECRET"),
 	}
 }
 
@@ -79,7 +85,8 @@ func corsMiddleware(cfg *config) gin.HandlerFunc {
 		origin := c.GetHeader("Origin")
 		if origin == cfg.AllowedOrigin {
 			c.Header("Access-Control-Allow-Origin", origin)
-			c.Header("Access-Control-Allow-Methods", "GET, OPTIONS")
+			c.Header("Access-Control-Allow-Credentials", "true")
+			c.Header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
 			c.Header("Access-Control-Allow-Headers", "Content-Type")
 		}
 		if c.Request.Method == "OPTIONS" {
@@ -107,6 +114,16 @@ func main() {
 	dj := &autoDJ{cfg: cfg, hub: hub, sp: sp, yt: yt, poller: p}
 	go dj.loop()
 
+	cv := &convServer{
+		cfg:       cfg,
+		sp:        sp,
+		yt:        yt,
+		session:   newSessionStore(cfg.ConvertSessSecret),
+		quota:     &quotaTracker{},
+		jobs:      &jobStore{m: map[string]*convJob{}},
+		jobTokens: map[string]*userTokens{},
+	}
+
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.New()
 	r.Use(gin.Recovery(), corsMiddleware(cfg))
@@ -115,6 +132,18 @@ func main() {
 	r.GET("/ws", hub.serveWS)
 	r.GET("/auth/login", authLogin(cfg))
 	r.GET("/auth/callback", authCallback(cfg))
+
+	// Playlist converter (per-user OAuth, see convert.go).
+	r.GET("/c/status", cv.status)
+	r.POST("/c/logout", cv.logout)
+	r.GET("/c/auth/spotify/login", cv.spLogin)
+	r.GET("/c/auth/spotify/callback", cv.spCallback)
+	r.GET("/c/auth/google/login", cv.goLogin)
+	r.GET("/c/auth/google/callback", cv.goCallback)
+	r.GET("/c/spotify/playlists", cv.spPlaylistsH)
+	r.GET("/c/youtube/playlists", cv.ytPlaylistsH)
+	r.POST("/c/convert", cv.convertH)
+	r.GET("/c/jobs/:id", cv.jobH)
 
 	log.Printf("dogs radio gin server listening on :%s", cfg.Port)
 	if err := r.Run(":" + cfg.Port); err != nil {
