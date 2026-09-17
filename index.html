@@ -237,10 +237,10 @@ function showTuning(){
   livetext.textContent = "CONNECTING";
   setTag("Warming up the transmitter…");
 }
-function showLive(){
+function showLive(msg){
   body.classList.add("tuned","live"); body.classList.remove("tuning");
   tunelabel.textContent = "TAP TO LEAVE";
-  livetext.textContent = "LIVE";
+  livetext.textContent = (msg && msg.src === "autodj") ? "AUTO DJ" : "LIVE";
 }
 function showOffAir(){
   body.classList.add("tuned"); body.classList.remove("tuning","live");
@@ -275,7 +275,7 @@ function applyNow(msg){
   artistEl.textContent = (tr.artists || []).join(", ") || "Unknown artist";
   if (tr.art){ art.src = tr.art; artwash.style.backgroundImage = 'url("' + tr.art + '")'; }
   marquee();
-  showLive();
+  showLive(msg);
   setTag("You're hearing exactly what he's hearing.");
   if (playerReady){
     if (msg.yt && msg.yt !== currentVideo){
