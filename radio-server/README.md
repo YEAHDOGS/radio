@@ -76,6 +76,16 @@ WantedBy=multi-user.target
 The frontend at `radio.dogs.red` connects to `wss://radio-api.dogs.red/ws`
 (see `WS_URL` at the top of the site's `index.html`).
 
+## Auto-DJ
+
+When his Spotify goes quiet for `AUTODJ_IDLE_SECS` (default 120s), the
+server takes over: it pulls every track from the `AUTODJ_PLAYLISTS`
+(comma-separated playlist IDs), shuffles, and walks the queue on each
+track's real duration — broadcasting the same `now` state live tracks
+use, with `"src":"autodj"` so the site can badge it. The pool refreshes
+every 15 minutes, so playlist adds show up on their own. The instant he
+plays anything on Spotify, live cuts back in.
+
 ## Notes
 
 - `.env.local` is gitignored — the refresh token never leaves the server.

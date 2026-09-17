@@ -112,6 +112,61 @@ func (s *spotifyClient) nowPlaying() (*nowPlayingOut, error) {
 	return &nowPlayingOut{Playing: body.IsPlaying, ProgressMs: body.ProgressMs, Track: body.Item}, nil
 }
 
+// playlistTracks pulls every track from a Spotify playlist (paginated).
+// Used by the auto-DJ pool. Skips local files and unplayable entries.
+func (s *spotifyClient) playlistTracks(id string) ([]djTrack, error) {
+	tok, err := s.accessToken()
+	if err != nil {
+		return nil, err
+	}
+	var out []djTrack
+	offset := 0
+	for {
+		u := fmt.Sprintf("https://api.spotify.com/v1/playlists/%s/tracks?limit=100&offset=%d&fields=total,items(track(id,name,duration_ms,artists(name),album(name,images)))", url.PathEscape(id), offset)
+		req, err := http.NewRequest("GET", u, nil)
+		if err != nil {
+			return nil, err
+		}
+		req.Header.Set("Authorization", "Bearer "+tok)
+		resp, err := s.http.Do(req)
+		if err != nil {
+			return nil, err
+		}
+		b, _ := io.ReadAll(resp.Body)
+		resp.Body.Close()
+		if resp.StatusCode != 200 {
+			return nil, fmt.Errorf("playlist tracks: %d %s", resp.StatusCode, strings.TrimSpace(string(b)))
+		}
+		var body struct {
+			Total int `json:"total"`
+			Items []struct {
+				Track *spTrack `json:"track"`
+			} `json:"items"`
+		}
+		if err := json.Unmarshal(b, &body); err != nil {
+			return nil, err
+		}
+		for _, it := range body.Items {
+			t := it.Track
+			if t == nil || t.ID == "" || t.DurationMs <= 0 {
+				continue
+			}
+			out = append(out, djTrack{
+				ID:         t.ID,
+				Title:      t.Name,
+				Artists:    artistNames(t),
+				Album:      t.Album.Name,
+				Art:        artURL(t),
+				DurationMs: t.DurationMs,
+			})
+		}
+		offset += len(body.Items)
+		if offset >= body.Total || len(body.Items) == 0 {
+			break
+		}
+	}
+	return out, nil
+}
 // artistNames flattens Spotify artists for display + YouTube search.
 func artistNames(t *spTrack) []string {
 	out := make([]string, 0, len(t.Artists))

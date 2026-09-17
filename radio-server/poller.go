@@ -6,6 +6,7 @@ package main
 import (
 	"log"
 	"strings"
+	"sync/atomic"
 	"time"
 )
 
@@ -16,6 +17,12 @@ type poller struct {
 	yt          *ytResolver
 	lastTrackID string
 	errs        int
+	lastLiveAt  atomic.Int64 // unix nano of the last tick where he was actively playing
+}
+
+// lastLive reports when he was last heard playing on Spotify.
+func (p *poller) lastLive() time.Time {
+	return time.Unix(0, p.lastLiveAt.Load())
 }
 
 func (p *poller) loop() {
@@ -54,13 +61,16 @@ func (p *poller) tick() {
 		return
 	}
 	if np.Track.ID == p.lastTrackID {
+		p.lastLiveAt.Store(time.Now().UnixNano())
 		return
 	}
 	p.lastTrackID = np.Track.ID
+	p.lastLiveAt.Store(time.Now().UnixNano())
 	artists := artistNames(np.Track)
 	vid := p.yt.resolve(np.Track.Name, artists)
 	p.hub.setState(nowMsg{
 		T:          "now",
+		Src:        "live",
 		Playing:    true,
 		ProgressMs: np.ProgressMs,
 		At:         time.Now().UnixMilli(),

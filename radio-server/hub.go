@@ -29,6 +29,7 @@ type trackJSON struct {
 
 type nowMsg struct {
 	T          string     `json:"t"` // "now" | "offair"
+	Src        string     `json:"src,omitempty"` // "live" | "autodj"
 	Playing    bool       `json:"playing"`
 	ProgressMs int64      `json:"progress_ms"`
 	At         int64      `json:"at"` // unix ms when progress_ms was sampled

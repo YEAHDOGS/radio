@@ -15,6 +15,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -29,6 +30,8 @@ type config struct {
 	SpotifyClientSecret string
 	SpotifyRefreshToken string
 	YoutubeKey          string
+	AutoDJPlaylists     string // comma-separated Spotify playlist IDs for the auto-DJ pool
+	AutoDJIdleSecs      int    // seconds of Spotify silence before the DJ takes over
 }
 
 func getenv(key, def string) string {
@@ -54,6 +57,10 @@ func loadConfig() *config {
 		}
 		f.Close()
 	}
+	idleSecs, _ := strconv.Atoi(getenv("AUTODJ_IDLE_SECS", "120"))
+	if idleSecs < 10 {
+		idleSecs = 10
+	}
 	return &config{
 		Port:                getenv("PORT", "8080"),
 		PublicURL:           getenv("PUBLIC_URL", "http://localhost:8080"),
@@ -62,6 +69,8 @@ func loadConfig() *config {
 		SpotifyClientSecret: os.Getenv("SPOTIFY_CLIENT_SECRET"),
 		SpotifyRefreshToken: os.Getenv("SPOTIFY_REFRESH_TOKEN"),
 		YoutubeKey:          os.Getenv("YOUTUBE_API_KEY"),
+		AutoDJPlaylists:     os.Getenv("AUTODJ_PLAYLISTS"),
+		AutoDJIdleSecs:      idleSecs,
 	}
 }
 
@@ -95,6 +104,8 @@ func main() {
 	yt := &ytResolver{key: cfg.YoutubeKey, http: &http.Client{Timeout: 10 * time.Second}, cache: map[string]string{}}
 	p := &poller{cfg: cfg, hub: hub, sp: sp, yt: yt}
 	go p.loop()
+	dj := &autoDJ{cfg: cfg, hub: hub, sp: sp, yt: yt, poller: p}
+	go dj.loop()
 
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.New()
