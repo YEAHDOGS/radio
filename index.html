@@ -4,12 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Dogs Radio — tap in live</title>
-<meta name="description" content="Tap listen and hear exactly what Jack Sparrow is playing right now — live. No sign-in, no account.">
+<meta name="description" content="Tap listen and hear exactly what's playing right now — live. No sign-in, no account.">
 <link rel="canonical" href="https://radio.dogs.red/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Dogs Radio">
 <meta property="og:title" content="Dogs Radio — tap in live">
-<meta property="og:description" content="No sign-in. Hit listen and you're on Jack Sparrow's aux — live.">
+<meta property="og:description" content="No sign-in. Hit listen and you're on the owner's aux — live.">
 <meta property="og:url" content="https://radio.dogs.red/">
 <meta property="og:image" content="https://radio.dogs.red/og.png">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
@@ -139,6 +139,7 @@ footer{
   padding:0 0 calc(env(safe-area-inset-bottom,0px) + 14px);
 }
 footer a{display:block;width:fit-content;opacity:.85}
+.convlink{margin:0 auto 14px;color:var(--dim);font-size:13px;letter-spacing:.1em;text-decoration:none;text-align:center}
 footer img{height:26px;width:auto;display:block}
 
 /* hidden youtube player */
@@ -167,7 +168,7 @@ footer img{height:26px;width:auto;display:block}
     <span class="spinner" aria-hidden="true"></span>
   </button>
   <div class="tune-label" id="tunelabel">LISTEN NOW</div>
-  <p class="tag" id="tag">Tap in. You're on Jack Sparrow's aux — whatever he's playing, you're hearing it live.</p>
+  <p class="tag" id="tag">Tap in. You're on the owner's aux — whatever's playing, you're hearing it live.</p>
   <div class="listeners" id="listeners" hidden><b id="lcount">0</b> tuned in</div>
 </main>
 
@@ -182,6 +183,7 @@ footer img{height:26px;width:auto;display:block}
 </section>
 
 <footer>
+  <a class="convlink" href="/convert.html">convert playlists &#8646;</a>
   <a href="https://wearedogs.net" aria-label="Made by DOGS"><img src="assets/made-by-dogs.png" alt="Made by DOGS"></a>
 </footer>
 
@@ -344,7 +346,7 @@ function leave(){
   ws = null; stopPlayback();
   listenersEl.hidden = true;
   showIdle();
-  setTag("Tap in. You're on Jack Sparrow's aux — whatever he's playing, you're hearing it live.");
+  setTag("Tap in. You're on the owner's aux — whatever's playing, you're hearing it live.");
 }
 
 tunein.addEventListener("click", async () => {

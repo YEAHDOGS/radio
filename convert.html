@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Playlist converter — Dogs Radio</title>
+<meta name="description" content="Copy a playlist between Spotify and YouTube, both directions.">
+<link rel="canonical" href="https://radio.dogs.red/convert.html">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#0a0a0c">
+<style>
+:root{
+  --bg:#0a0a0c; --ink:#f2ede3; --mut:#a8a094; --dim:#5c574c;
+  --amber:#ffb03a; --red:#ff453a; --green:#3ddc84;
+  --line:#232227; --ease:cubic-bezier(.16,1,.3,1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  background:var(--bg); color:var(--ink);
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  -webkit-font-smoothing:antialiased; min-height:100svh;
+  -webkit-tap-highlight-color:transparent;
+}
+.bg{position:fixed;inset:0;z-index:-1;overflow:hidden;background:var(--bg)}
+.blob{position:absolute;width:70vmax;height:70vmax;border-radius:50%;filter:blur(70px);opacity:.5;will-change:transform}
+.b1{left:-25vmax;top:-20vmax;background:radial-gradient(circle,rgba(255,176,58,.20),transparent 65%);animation:drift1 26s ease-in-out infinite alternate}
+.b2{right:-25vmax;bottom:-22vmax;background:radial-gradient(circle,rgba(255,69,58,.14),transparent 65%);animation:drift2 32s ease-in-out infinite alternate}
+@keyframes drift1{to{transform:translate(9vmax,7vmax) scale(1.12)}}
+@keyframes drift2{to{transform:translate(-8vmax,-6vmax) scale(1.08)}}
+header{display:flex;align-items:center;justify-content:space-between;padding:calc(env(safe-area-inset-top,0px) + 14px) 20px 0}
+.brand{font-weight:800;letter-spacing:.22em;font-size:13px}
+.brand a{color:var(--ink);text-decoration:none}
+.back{color:var(--mut);text-decoration:none;font-size:13px;letter-spacing:.08em}
+main{max-width:560px;margin:0 auto;padding:32px 20px 64px}
+h1{font-size:34px;font-weight:800;letter-spacing:-.02em;margin-bottom:8px}
+.sub{color:var(--mut);font-size:15px;line-height:1.5;margin-bottom:28px}
+.step{margin-bottom:26px}
+.steplabel{font-size:12px;letter-spacing:.18em;color:var(--dim);margin-bottom:10px;font-weight:700}
+.btnrow{display:flex;gap:10px;flex-wrap:wrap}
+.btn{
+  flex:1 1 0; min-height:52px; border:1px solid var(--line); border-radius:14px;
+  background:rgba(255,255,255,.03); color:var(--ink); font-size:15px; font-weight:700;
+  cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;
+  transition:transform .15s var(--ease), border-color .2s, background .2s; text-decoration:none;
+  padding:0 16px;
+}
+.btn:active{transform:scale(.97)}
+.btn.connected{border-color:rgba(61,220,132,.5); color:var(--green)}
+.btn .dot{width:8px;height:8px;border-radius:50%;background:var(--dim)}
+.btn.connected .dot{background:var(--green)}
+.seg{display:flex;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.seg button{
+  flex:1;min-height:52px;background:transparent;border:0;color:var(--mut);
+  font-size:14px;font-weight:700;cursor:pointer;transition:background .2s,color .2s;
+}
+.seg button.on{background:rgba(255,176,58,.14);color:var(--amber)}
+select,input[type=text]{
+  width:100%;min-height:52px;border:1px solid var(--line);border-radius:14px;
+  background:rgba(255,255,255,.03);color:var(--ink);font-size:15px;padding:0 14px;
+  font-family:inherit;
+}
+select:disabled{opacity:.4}
+.go{
+  width:100%;min-height:56px;border:0;border-radius:16px;margin-top:6px;
+  background:linear-gradient(135deg,var(--amber),#ff7a1e);color:#1a1206;
+  font-size:17px;font-weight:800;cursor:pointer;transition:transform .15s var(--ease), opacity .2s;
+}
+.go:active{transform:scale(.98)}
+.go:disabled{opacity:.35;cursor:default}
+.prog{margin-top:22px;display:none}
+.prog.show{display:block}
+.bar{height:8px;border-radius:99px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--amber),var(--red));border-radius:99px;transition:width .3s var(--ease)}
+.pstat{margin-top:10px;font-size:14px;color:var(--mut)}
+.failed{margin-top:12px;font-size:13px;color:var(--dim);line-height:1.7}
+.failed b{color:var(--mut)}
+.result{margin-top:16px;display:none}
+.result.show{display:block}
+.result a{
+  display:flex;align-items:center;justify-content:center;min-height:52px;border-radius:14px;
+  background:rgba(61,220,132,.12);border:1px solid rgba(61,220,132,.4);color:var(--green);
+  font-weight:700;text-decoration:none;font-size:15px;
+}
+.note{margin-top:26px;font-size:13px;color:var(--dim);line-height:1.7}
+.note b{color:var(--mut)}
+.err{
+  display:none;margin-top:14px;padding:12px 14px;border-radius:12px;font-size:14px;
+  background:rgba(255,69,58,.1);border:1px solid rgba(255,69,58,.35);color:#ff8a80;line-height:1.5;
+}
+.err.show{display:block}
+</style>
+</head>
+<body>
+<div class="bg"><div class="blob b1"></div><div class="blob b2"></div></div>
+<header>
+  <div class="brand"><a href="/">DOGS RADIO</a></div>
+  <a class="back" href="/">← back to radio</a>
+</header>
+<main>
+  <h1>Playlist converter</h1>
+  <p class="sub">Copy a playlist between Spotify and YouTube — both directions. Connect both accounts, pick a list, hit convert.</p>
+
+  <div class="step">
+    <div class="steplabel">1 · CONNECT</div>
+    <div class="btnrow">
+      <button class="btn" id="spBtn"><span class="dot"></span><span>Spotify</span></button>
+      <button class="btn" id="ytBtn"><span class="dot"></span><span>YouTube</span></button>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="steplabel">2 · DIRECTION</div>
+    <div class="seg">
+      <button id="dirSp2yt" class="on">Spotify → YouTube</button>
+      <button id="dirYt2sp">YouTube → Spotify</button>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="steplabel">3 · SOURCE PLAYLIST</div>
+    <select id="srcSel" disabled><option>Connect an account first</option></select>
+  </div>
+
+  <div class="step">
+    <div class="steplabel">4 · NAME THE COPY <span style="color:var(--dim);font-weight:400">(optional)</span></div>
+    <input type="text" id="nameIn" placeholder="My converted playlist" maxlength="120">
+  </div>
+
+  <button class="go" id="goBtn" disabled>Convert</button>
+  <div class="err" id="err"></div>
+
+  <div class="prog" id="prog">
+    <div class="bar"><i id="barFill"></i></div>
+    <div class="pstat" id="pstat">Starting…</div>
+    <div class="failed" id="failed"></div>
+    <div class="result" id="result"><a id="resultLink" href="#" target="_blank" rel="noopener">Open your converted playlist →</a></div>
+  </div>
+
+  <p class="note"><b>Heads up:</b> YouTube's free API quota only stretches to about 60 converted tracks a day, so big hauls may have to wait for tomorrow. Converted lists are private by default. Your logins stay between you and Spotify/Google — this server only holds the tokens while it converts.</p>
+</main>
+
+<script>
+const API = "https://radio-api.dogs.red";
+const $ = id => document.getElementById(id);
+let direction = "sp2yt";
+let connected = {spotify:false, google:false};
+let playlists = [];
+
+async function api(path, opts){
+  const r = await fetch(API + path, Object.assign({credentials:"include"}, opts||{}));
+  if(!r.ok){ const j = await r.json().catch(()=>({})); throw new Error(j.err || ("HTTP "+r.status)); }
+  return r.json();
+}
+function showErr(m){ const e=$("err"); e.textContent=m; e.classList.add("show"); }
+function hideErr(){ $("err").classList.remove("show"); }
+
+async function refreshStatus(){
+  try{ connected = await api("/c/status"); }
+  catch(e){ connected = {spotify:false, google:false}; }
+  $("spBtn").classList.toggle("connected", !!connected.spotify);
+  $("ytBtn").classList.toggle("connected", !!connected.google);
+  $("spBtn").querySelector("span:last-child").textContent = connected.spotify ? "Spotify ✓" : "Spotify";
+  $("ytBtn").querySelector("span:last-child").textContent = connected.google ? "YouTube ✓" : "YouTube";
+  loadPlaylists();
+}
+
+$("spBtn").onclick = () => { location.href = API + "/c/auth/spotify/login"; };
+$("ytBtn").onclick = () => { location.href = API + "/c/auth/google/login"; };
+
+$("dirSp2yt").onclick = () => setDir("sp2yt");
+$("dirYt2sp").onclick = () => setDir("yt2sp");
+function setDir(d){
+  direction = d;
+  $("dirSp2yt").classList.toggle("on", d==="sp2yt");
+  $("dirYt2sp").classList.toggle("on", d==="yt2sp");
+  loadPlaylists();
+}
+
+async function loadPlaylists(){
+  const sel = $("srcSel"), go = $("goBtn");
+  const need = direction === "sp2yt" ? "spotify" : "google";
+  if(!connected[need]){
+    sel.disabled = true; go.disabled = true;
+    sel.innerHTML = "<option>Connect " + (need==="spotify"?"Spotify":"YouTube") + " first</option>";
+    return;
+  }
+  sel.disabled = true;
+  sel.innerHTML = "<option>Loading playlists…</option>";
+  try{
+    playlists = await api(direction === "sp2yt" ? "/c/spotify/playlists" : "/c/youtube/playlists");
+  }catch(e){ showErr("Couldn't load playlists: " + e.message); return; }
+  if(!playlists.length){
+    sel.innerHTML = "<option>No playlists found</option>";
+    return;
+  }
+  sel.disabled = false; go.disabled = false;
+  sel.innerHTML = playlists.map((p,i) =>
+    "<option value=\"" + p.id + "\">" + escapeHtml(p.name) + " (" + p.tracks + " tracks)</option>"
+  ).join("");
+}
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g, m => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m])); }
+
+let polling = null;
+$("goBtn").onclick = async () => {
+  hideErr();
+  $("prog").classList.add("show");
+  $("result").classList.remove("show");
+  $("failed").innerHTML = "";
+  $("barFill").style.width = "0";
+  $("pstat").textContent = "Starting…";
+  $("goBtn").disabled = true;
+  let job;
+  try{
+    const r = await api("/c/convert", {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({direction, source_id: $("srcSel").value, name: $("nameIn").value.trim()})
+    });
+    job = r.job;
+  }catch(e){ showErr(e.message); $("goBtn").disabled = false; return; }
+  clearInterval(polling);
+  polling = setInterval(async () => {
+    let j;
+    try{ j = await api("/c/jobs/" + job); }
+    catch(e){ return; }
+    const pct = j.total ? Math.round(j.done / j.total * 100) : 0;
+    $("barFill").style.width = pct + "%";
+    $("pstat").textContent = j.done + " / " + j.total + " tracks";
+    if(j.state === "done" || j.state === "error"){
+      clearInterval(polling);
+      $("goBtn").disabled = false;
+      if(j.state === "error"){ showErr(j.err || "Conversion failed."); return; }
+      $("pstat").textContent = "Done — " + (j.total - j.failed.length) + " converted" +
+        (j.failed.length ? ", " + j.failed.length + " skipped" : "") + ".";
+      if(j.failed.length){
+        $("failed").innerHTML = "<b>Skipped:</b><br>" + j.failed.map(escapeHtml).join("<br>");
+      }
+      if(j.result_url){
+        $("resultLink").href = j.result_url;
+        $("result").classList.add("show");
+      }
+    }
+  }, 1500);
+};
+
+refreshStatus();
+</script>
+</body>
+</html>
