@@ -3,432 +3,357 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Dogs Radio — 24/7 community radio</title>
-<meta name="description" content="Community radio stations built from Spotify playlists. Everyone hears the same song at the same time. Edge-native. No servers.">
-<link rel="canonical" href="https://yeahdogs.github.io/radio/">
+<title>Dogs Radio — tap in live</title>
+<meta name="description" content="Tap listen and hear exactly what Jack Sparrow is playing right now — live. No sign-in, no account.">
+<link rel="canonical" href="https://radio.dogs.red/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Dogs Radio">
-<meta property="og:title" content="Dogs Radio — 24/7 community radio">
-<meta property="og:description" content="Community radio stations built from playlists. Everyone hears the same song at the same time.">
-<meta property="og:url" content="https://yeahdogs.github.io/radio/">
-<meta property="og:image" content="https://yeahdogs.github.io/radio/og.png">
+<meta property="og:title" content="Dogs Radio — tap in live">
+<meta property="og:description" content="No sign-in. Hit listen and you're on Jack Sparrow's aux — live.">
+<meta property="og:url" content="https://radio.dogs.red/">
+<meta property="og:image" content="https://radio.dogs.red/og.png">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <meta name="theme-color" content="#0a0a0c">
 <style>
 :root{
   --bg:#0a0a0c; --ink:#f2ede3; --mut:#a8a094; --dim:#5c574c;
-  --amber:#ffb03a; --red:#ff453a; --line:#232227;
-  --ease:cubic-bezier(.16,1,.3,1);
+  --amber:#ffb03a; --amber-deep:#ff8a1e; --red:#ff453a;
+  --line:#232227; --ease:cubic-bezier(.16,1,.3,1);
 }
 *{box-sizing:border-box;margin:0;padding:0}
-html{scrollbar-width:thin;scrollbar-color:#2a292e #0a0a0c}
+html,body{height:100%}
 body{
   background:var(--bg); color:var(--ink);
   font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-  line-height:1.5; -webkit-font-smoothing:antialiased;
-  overflow-x:hidden;
+  -webkit-font-smoothing:antialiased; overflow:hidden;
+  height:100svh; height:100dvh;
+  display:flex; flex-direction:column;
+  user-select:none; -webkit-user-select:none; -webkit-tap-highlight-color:transparent;
 }
-.mono{font-family:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace}
-a{color:inherit}
 img{max-width:100%}
 
-/* snap stage */
-.stage{height:100svh;overflow-y:scroll;scroll-snap-type:y mandatory;overscroll-behavior-y:contain}
-.panel{
-  position:relative;min-height:100svh;scroll-snap-align:start;scroll-snap-stop:always;
-  overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;
-  padding:84px 20px 56px;isolation:isolate;
-}
-.panel.top{justify-content:flex-start;padding-top:104px}
-.panel.mid{justify-content:center}
-.panel .bg{
-  position:absolute;top:-10%;left:0;width:100%;height:120%;z-index:-2;
-  background-size:cover;background-position:center;background-repeat:no-repeat;
-  will-change:transform;filter:saturate(.92) brightness(.82);
-}
-@supports (animation-timeline: view()){
-  .panel .bg{animation:drift linear both;animation-timeline:view();animation-range:entry 0% exit 100%}
-  @keyframes drift{from{transform:translateY(-7%) scale(1.05)}to{transform:translateY(7%) scale(1.05)}}
-}
-.scrim{position:absolute;inset:0;z-index:-1;
-  background:linear-gradient(180deg,rgba(10,10,12,.60) 0%,rgba(10,10,12,.16) 42%,rgba(10,10,12,.90) 100%)}
-.panel.top .scrim{background:linear-gradient(180deg,rgba(10,10,12,.90) 0%,rgba(10,10,12,.16) 62%,rgba(10,10,12,.55) 100%)}
-.panel.plain .scrim{background:linear-gradient(180deg,rgba(10,10,12,.4),rgba(10,10,12,.72))}
+/* ambient background */
+.bg{position:fixed;inset:0;z-index:-2;overflow:hidden;background:var(--bg)}
+.blob{position:absolute;width:70vmax;height:70vmax;border-radius:50%;filter:blur(70px);opacity:.5;will-change:transform}
+.b1{left:-25vmax;top:-20vmax;background:radial-gradient(circle,rgba(255,176,58,.20),transparent 65%);animation:drift1 26s ease-in-out infinite alternate}
+.b2{right:-25vmax;bottom:-22vmax;background:radial-gradient(circle,rgba(255,69,58,.14),transparent 65%);animation:drift2 32s ease-in-out infinite alternate}
+@keyframes drift1{to{transform:translate(9vmax,7vmax) scale(1.12)}}
+@keyframes drift2{to{transform:translate(-8vmax,-6vmax) scale(1.08)}}
+.artwash{position:absolute;inset:0;background-size:cover;background-position:center;filter:blur(90px) saturate(1.4);opacity:0;transition:opacity 1.2s var(--ease)}
+body.live .artwash{opacity:.32}
 
-/* type */
-.kick{font-size:11px;letter-spacing:.3em;color:var(--amber);text-transform:uppercase;margin-bottom:14px;font-weight:700}
-.giant{
-  font-weight:850;line-height:.92;letter-spacing:-.02em;text-transform:uppercase;
-  font-size:clamp(64px,19vw,170px);text-wrap:balance;
-}
-.line{margin-top:16px;font-size:clamp(16px,4.4vw,21px);color:var(--ink);max-width:26ch;font-weight:500}
-.line small{display:block;margin-top:8px;font-size:14px;color:var(--mut);font-weight:400;max-width:40ch}
-.panel .wrap{max-width:720px}
-.panel.right .wrap{margin-left:auto}
-.panel.right{align-items:flex-end}
-
-/* reveal: panels observed, children stagger */
-.rv{opacity:0;transform:translateY(26px);clip-path:inset(0 0 30% 0);
-  transition:opacity .8s var(--ease),transform .8s var(--ease),clip-path .8s var(--ease);
-  transition-delay:calc(var(--i,0)*110ms)}
-.panel.on .rv{opacity:1;transform:none;clip-path:inset(0 0 0 0)}
-
-/* topbar */
-.topbar{
-  position:fixed;top:0;left:0;right:0;z-index:30;
+/* header */
+header{
   display:flex;align-items:center;justify-content:space-between;
-  padding:14px 20px;padding-top:calc(14px + env(safe-area-inset-top));
-  background:rgba(10,10,12,.72);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
-  border-bottom:1px solid var(--line);
+  padding:calc(env(safe-area-inset-top,0px) + 14px) 20px 0;flex:0 0 auto;
 }
-.wordmark{font-weight:800;letter-spacing:.16em;font-size:13px;text-transform:uppercase;text-decoration:none}
-.wordmark b{color:var(--amber);font-weight:800}
-.onair{display:flex;align-items:center;gap:8px;font-size:10px;letter-spacing:.24em;color:var(--mut);text-transform:uppercase;font-weight:700}
-.dot{width:9px;height:9px;border-radius:50%;background:var(--red);
-  box-shadow:0 0 12px 2px rgba(255,69,58,.85);animation:pulse 1.6s ease-in-out infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
-
-/* cta */
-.cta{
-  display:inline-block;margin-top:26px;padding:15px 30px;min-height:52px;
-  background:var(--amber);color:#141006;font-weight:800;font-size:15px;letter-spacing:.02em;
-  text-decoration:none;border-radius:12px;border:0;cursor:pointer;
-  transition:transform .18s var(--ease),filter .18s ease;
+.brand{font-weight:800;letter-spacing:.22em;font-size:13px}
+.brand span{color:var(--amber)}
+.livepill{
+  display:flex;align-items:center;gap:8px;font-size:11px;font-weight:800;letter-spacing:.18em;
+  border:1px solid var(--line);border-radius:999px;padding:8px 14px;color:var(--dim);
+  transition:color .4s,border-color .4s;
 }
-.cta:active{transform:scale(.97)}
-.cta:hover{filter:brightness(1.08)}
+.livepill i{width:8px;height:8px;border-radius:50%;background:var(--dim);transition:background .4s}
+body.live .livepill{color:var(--red);border-color:rgba(255,69,58,.4)}
+body.live .livepill i{background:var(--red);animation:pulse 1.6s ease-in-out infinite}
+body.tuning .livepill{color:var(--amber);border-color:rgba(255,176,58,.4)}
+body.tuning .livepill i{background:var(--amber);animation:pulse 1s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.35}}
 
-/* equalizer bars, transform-only */
-.eq{display:flex;align-items:flex-end;gap:4px;height:44px;margin-top:26px}
-.eq i{width:5px;height:100%;border-radius:3px;background:var(--amber);transform-origin:bottom;
-  animation:eqb 1.1s ease-in-out infinite;opacity:.9}
-.eq i:nth-child(3n){background:var(--red)}
-@keyframes eqb{0%,100%{transform:scaleY(.25)}50%{transform:scaleY(1)}}
-
-/* scroll cue */
-.cue{position:absolute;right:22px;bottom:18px;
-  display:flex;flex-direction:column;align-items:center;gap:8px;
-  font-size:10px;letter-spacing:.3em;color:var(--dim);text-transform:uppercase}
-.cue::after{content:"";width:1px;height:34px;background:linear-gradient(var(--amber),transparent);
-  animation:cue 1.8s var(--ease) infinite}
-@keyframes cue{0%{transform:scaleY(0);transform-origin:top}45%{transform:scaleY(1);transform-origin:top}55%{transform:scaleY(1);transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
-
-/* spec chips */
-.spec{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px}
-.spec span{font-size:12px;letter-spacing:.08em;color:var(--mut);
-  border:1px solid var(--line);border-radius:999px;padding:8px 14px;background:rgba(10,10,12,.5)}
-
-/* tuner demo */
-.tuner{margin-top:24px;max-width:560px}
-.station{
-  display:flex;align-items:center;gap:14px;width:100%;
-  padding:16px 18px;background:rgba(12,12,14,.66);border:1px solid var(--line);
-  border-radius:14px;color:var(--ink);cursor:pointer;text-align:left;margin-bottom:10px;
-  transition:transform .18s var(--ease),border-color .18s ease,background .18s ease;
-  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);min-height:64px;
+/* stage */
+main{
+  flex:1 1 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:22px;padding:0 24px;min-height:0;
 }
-.station:active{transform:scale(.98)}
-.station[aria-pressed="true"]{border-color:var(--amber);background:rgba(255,176,58,.08)}
-.station .freq{font-size:13px;color:var(--amber);font-weight:700;letter-spacing:.06em;min-width:52px}
-.station .nm{font-weight:700;font-size:16px;letter-spacing:.02em;flex:1;white-space:nowrap}
-.station .np{font-size:12px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:42%}
-.nowbar{display:flex;align-items:center;gap:10px;margin-top:8px;font-size:12px;color:var(--mut);letter-spacing:.06em}
-.nowbar .dot{width:7px;height:7px}
-.hint{margin-top:14px;font-size:12px;color:var(--dim);letter-spacing:.04em}
-
-/* notify form */
-form.notify{margin-top:24px;max-width:440px}
-.field{margin-bottom:12px}
-.field label{display:block;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--dim);margin-bottom:8px;font-weight:700}
-.field input{
-  width:100%;padding:15px 16px;font-size:16px;color:var(--ink);
-  background:rgba(16,16,18,.8);border:1px solid var(--line);border-radius:12px;outline:none;
-  transition:border-color .18s ease;
+#tunein{
+  position:relative;width:168px;height:168px;border:0;background:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;flex:0 0 auto;
 }
-.field input:focus{border-color:var(--amber)}
-.field input::placeholder{color:var(--dim)}
-.fine{margin-top:14px;font-size:12.5px;color:var(--dim);max-width:40ch}
-.done-msg{margin-top:18px;padding:16px;border:1px solid var(--amber);border-radius:12px;
-  background:rgba(255,176,58,.08);font-size:15px;display:none}
-.done-msg.show{display:block}
+#tunein .rings{position:absolute;inset:0;pointer-events:none}
+#tunein .rings i{
+  position:absolute;inset:0;border-radius:50%;border:1px solid rgba(255,176,58,.55);
+  animation:ring 2.8s var(--ease) infinite;opacity:0;
+}
+#tunein .rings i:nth-child(2){animation-delay:.9s}
+#tunein .rings i:nth-child(3){animation-delay:1.8s}
+@keyframes ring{0%{transform:scale(.62);opacity:0}25%{opacity:.9}100%{transform:scale(1.18);opacity:0}}
+#tunein .core{
+  width:118px;height:118px;border-radius:50%;
+  background:linear-gradient(145deg,var(--amber),var(--amber-deep));
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 12px 44px rgba(255,150,40,.35), inset 0 2px 6px rgba(255,255,255,.35);
+  transition:transform .25s var(--ease);
+  will-change:transform;
+}
+#tunein:active .core{transform:scale(.93)}
+#tunein .playicon{width:44px;height:44px;fill:#1a1206;margin-left:6px}
+#tunein .stopicon{display:none;width:36px;height:36px;fill:#1a1206}
+body.tuned #tunein .playicon{display:none}
+body.tuned #tunein .stopicon{display:block}
+body.tuned #tunein .rings i{animation-play-state:paused;opacity:0}
+.tune-label{font-size:15px;font-weight:800;letter-spacing:.3em;color:var(--ink)}
+.tag{font-size:13px;color:var(--mut);text-align:center;max-width:300px;line-height:1.6;min-height:42px}
+.listeners{font-size:11px;letter-spacing:.2em;color:var(--dim);text-transform:uppercase}
+.listeners b{color:var(--amber);font-size:13px}
+.spinner{width:118px;height:118px;display:none;align-items:center;justify-content:center}
+body.tuning .spinner{display:flex}
+body.tuning #tunein .core{display:none}
+body.tuning #tunein .rings i{animation-duration:1.2s}
+.spinner::after{
+  content:"";width:52px;height:52px;border-radius:50%;
+  border:3px solid rgba(255,176,58,.25);border-top-color:var(--amber);
+  animation:spin .9s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* now playing card */
+.nowcard{
+  flex:0 0 auto;margin:0 16px calc(env(safe-area-inset-bottom,0px) + 12px);
+  width:calc(100% - 32px);max-width:430px;
+  background:rgba(20,19,24,.72);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  border:1px solid var(--line);border-radius:18px;padding:14px 16px;
+  display:grid;grid-template-columns:56px 1fr auto;gap:12px;align-items:center;
+  transform:translateY(140%);transition:transform .7s var(--ease);
+}
+body.live .nowcard{transform:translateY(0)}
+.nowcard .art{width:56px;height:56px;border-radius:12px;object-fit:cover;background:#1c1b20}
+.nowcard .meta{min-width:0}
+.nowcard .title{font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden}
+.nowcard .artist{font-size:12px;color:var(--mut);white-space:nowrap;overflow:hidden;margin-top:2px}
+.mq{display:inline-block;white-space:nowrap;will-change:transform}
+.mq.scroll{animation:mq 9s linear infinite}
+@keyframes mq{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.eq{display:flex;align-items:flex-end;gap:3px;height:26px}
+.eq i{width:4px;border-radius:2px;background:var(--amber);height:100%;transform:scaleY(.2);transform-origin:bottom}
+body.live .eq i{animation:eq .9s ease-in-out infinite}
+.eq i:nth-child(2){animation-delay:.15s}.eq i:nth-child(3){animation-delay:.3s}
+.eq i:nth-child(4){animation-delay:.45s}.eq i:nth-child(5){animation-delay:.6s}
+@keyframes eq{0%,100%{transform:scaleY(.2)}50%{transform:scaleY(1)}}
+.prog{grid-column:1/-1;height:3px;border-radius:2px;background:#2a292e;overflow:hidden}
+.prog i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--amber),var(--amber-deep));border-radius:2px}
 
 /* footer */
-.badge{display:block;margin-top:44px;width:min(300px,72vw);height:auto;opacity:.96;
-  transition:transform .18s var(--ease),opacity .18s ease}
-.badge:hover{transform:translateY(-2px);opacity:1}
-.foot{margin-top:28px;display:flex;gap:18px;flex-wrap:wrap;font-size:12.5px;color:var(--dim)}
-.foot a{text-decoration:none;border-bottom:1px solid var(--line)}
-.status{margin-top:12px;font-size:12px;letter-spacing:.14em;color:var(--dim);text-transform:uppercase}
+footer{
+  flex:0 0 auto;display:flex;justify-content:center;
+  padding:0 0 calc(env(safe-area-inset-bottom,0px) + 14px);
+}
+footer a{display:block;width:fit-content;opacity:.85}
+footer img{height:26px;width:auto;display:block}
 
-@media (min-width:768px){
-  .panel{padding:96px 48px 72px}
-  .panel.right .wrap{max-width:640px}
-  #p7 .giant{font-size:clamp(64px,9vw,118px)}
-  #p7 .line{margin-top:12px}
-  #p7 form.notify{margin-top:20px}
-  #p7 .badge{width:260px;margin-top:32px}
-  #p7 .foot{margin-top:20px}
-}
-@media (max-width:480px){
-  .panel.top{padding-top:92px}
-  form.notify{margin-top:16px}
-  .field input{padding:13px 14px}
-  .badge{width:216px;margin-top:26px}
-  .foot{margin-top:16px}
-  .line small{margin-top:6px}
-}
+/* hidden youtube player */
+#yt{position:fixed;left:0;bottom:0;width:2px;height:2px;opacity:.01;pointer-events:none}
+
 @media (prefers-reduced-motion:reduce){
-  *,*::before,*::after{animation:none!important;transition:none!important}
-  .rv{opacity:1;transform:none;clip-path:none}
-  .panel .bg{animation:none!important;transform:none!important}
+  .blob,#tunein .rings i,.eq i,.mq.scroll,.spinner::after{animation:none !important}
 }
 </style>
 </head>
 <body>
-<div class="stage" id="stage">
+<div class="bg" aria-hidden="true"><div class="blob b1"></div><div class="blob b2"></div><div class="artwash" id="artwash"></div></div>
 
-<header class="topbar">
-  <a class="wordmark" href="#p1">Dogs <b>Radio</b></a>
-  <span class="onair"><span class="dot" aria-hidden="true"></span>On air</span>
+<header>
+  <div class="brand">DOGS<span>RADIO</span></div>
+  <div class="livepill" id="livepill"><i></i><b id="livetext">OFF AIR</b></div>
 </header>
 
-<!-- 1. RADIO -->
-<section class="panel" id="p1" aria-label="Dogs Radio">
-  <div class="bg" style="background-image:url('img/dial.webp')" role="img" aria-label="Glowing vintage FM radio dial in the dark"></div>
-  <div class="scrim"></div>
-  <div class="wrap">
-    <p class="kick rv" style="--i:0">Dogs Radio — 24/7 community radio</p>
-    <h1 class="giant rv" style="--i:1">Radio</h1>
-    <p class="line rv" style="--i:2">Everyone hears the same song. At the same time.
-      <small>Stations built from playlists. True radio. No servers.</small>
-    </p>
-    <div class="eq rv" style="--i:3" aria-hidden="true">
-      <i style="animation-delay:0s"></i><i style="animation-delay:.12s"></i><i style="animation-delay:.24s"></i><i style="animation-delay:.36s"></i><i style="animation-delay:.48s"></i><i style="animation-delay:.6s"></i><i style="animation-delay:.72s"></i><i style="animation-delay:.84s"></i><i style="animation-delay:.96s"></i><i style="animation-delay:1.08s"></i><i style="animation-delay:.2s"></i><i style="animation-delay:.5s"></i><i style="animation-delay:.8s"></i><i style="animation-delay:.1s"></i><i style="animation-delay:.4s"></i><i style="animation-delay:.7s"></i>
-    </div>
-    <a class="cta rv" style="--i:4" href="#p7">Hear it first</a>
+<main>
+  <button id="tunein" aria-label="Listen now">
+    <span class="rings" aria-hidden="true"><i></i><i></i><i></i></span>
+    <span class="core">
+      <svg class="playicon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+      <svg class="stopicon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6h12v12H6z"/></svg>
+    </span>
+    <span class="spinner" aria-hidden="true"></span>
+  </button>
+  <div class="tune-label" id="tunelabel">LISTEN NOW</div>
+  <p class="tag" id="tag">Tap in. You're on Jack Sparrow's aux — whatever he's playing, you're hearing it live.</p>
+  <div class="listeners" id="listeners" hidden><b id="lcount">0</b> tuned in</div>
+</main>
+
+<section class="nowcard" id="nowcard" aria-live="polite">
+  <img class="art" id="art" alt="">
+  <div class="meta">
+    <div class="title"><span class="mq" id="mqtitle"><span id="title">—</span></span></div>
+    <div class="artist" id="artist">—</div>
   </div>
-  <div class="cue" aria-hidden="true">Scroll</div>
+  <div class="eq" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+  <div class="prog"><i id="progbar"></i></div>
 </section>
 
-<!-- 2. STATIONS -->
-<section class="panel right" id="p2" aria-label="Stations">
-  <div class="bg" style="background-image:url('img/vinyl.webp')" role="img" aria-label="Vinyl record spinning in warm amber light"></div>
-  <div class="scrim"></div>
-  <div class="wrap">
-    <p class="kick rv" style="--i:0">01 — Stations</p>
-    <h2 class="giant rv" style="--i:1">Stations</h2>
-    <p class="line rv" style="--i:2">A station is a playlist.
-      <small>Drop a playlist link. It broadcasts around the clock, whether you are listening or not.</small>
-    </p>
-  </div>
-</section>
+<footer>
+  <a href="https://wearedogs.net" aria-label="Made by DOGS"><img src="assets/made-by-dogs.png" alt="Made by DOGS"></a>
+</footer>
 
-<!-- 3. SAME TIME -->
-<section class="panel top plain" id="p3" aria-label="Same song, same second">
-  <div class="scrim"></div>
-  <div class="wrap">
-    <p class="kick rv" style="--i:0">02 — The one trick</p>
-    <h2 class="giant rv" style="--i:1">Same time</h2>
-    <p class="line rv" style="--i:2">Same song. Same second. Everywhere.
-      <small>One persistent cursor per station lives on the edge. When the track changes, it changes for everyone listening. Not personal playback. Radio.</small>
-    </p>
-    <div class="spec rv mono" style="--i:3" aria-label="Engine">
-      <span>Durable Objects</span><span>Workers</span><span>D1</span><span>Svelte 5</span>
-    </div>
-  </div>
-</section>
-
-<!-- 4. CHAT -->
-<section class="panel mid" id="p4" aria-label="Chat">
-  <div class="bg" style="background-image:url('img/crowd.webp')" role="img" aria-label="Crowd of listeners together in the dark under one warm light"></div>
-  <div class="scrim"></div>
-  <div class="wrap">
-    <p class="kick rv" style="--i:0">03 — The room</p>
-    <h2 class="giant rv" style="--i:1">Loud</h2>
-    <p class="line rv" style="--i:2">Talk while it plays.
-      <small>Every station has a live chat room. The crowd is part of the broadcast.</small>
-    </p>
-  </div>
-</section>
-
-<!-- 5. TUNE (demo) -->
-<section class="panel mid plain" id="p5" aria-label="Try the dial">
-  <div class="scrim"></div>
-  <div class="wrap" style="max-width:620px;width:100%">
-    <p class="kick rv" style="--i:0">04 — Try the dial</p>
-    <h2 class="giant rv" style="--i:1">Tune</h2>
-    <p class="line rv" style="--i:2">Four stations. One mock broadcast.
-      <small>Simulated now-playing, like the real cursor will drive it.</small>
-    </p>
-    <div class="tuner rv" style="--i:3" role="group" aria-label="Station tuner demo">
-      <div class="nowbar mono"><span class="dot" aria-hidden="true"></span><span id="nowlabel">NOW PLAYING</span></div>
-      <div class="eq" id="tuneeq" aria-hidden="true" style="margin:14px 0 18px">
-        <i style="animation-delay:0s"></i><i style="animation-delay:.15s"></i><i style="animation-delay:.3s"></i><i style="animation-delay:.45s"></i><i style="animation-delay:.6s"></i><i style="animation-delay:.75s"></i><i style="animation-delay:.9s"></i><i style="animation-delay:1.05s"></i><i style="animation-delay:.25s"></i><i style="animation-delay:.55s"></i><i style="animation-delay:.85s"></i><i style="animation-delay:.05s"></i><i style="animation-delay:.35s"></i><i style="animation-delay:.65s"></i><i style="animation-delay:.95s"></i>
-      </div>
-      <div id="stations"></div>
-      <p class="hint">Tap a station, or use ← → keys while this panel is up.</p>
-    </div>
-  </div>
-</section>
-
-<!-- 6. NO SERVERS -->
-<section class="panel" id="p6" aria-label="No servers">
-  <div class="bg" style="background-image:url('img/tower.webp')" role="img" aria-label="Radio transmission tower against the night sky"></div>
-  <div class="scrim"></div>
-  <div class="wrap">
-    <p class="kick rv" style="--i:0">05 — The engine</p>
-    <h2 class="giant rv" style="--i:1">No servers</h2>
-    <p class="line rv" style="--i:2">The edge runs the station.
-      <small>Workers for the API. Durable Objects for the cursor, alarms, and chat. D1 for the data. Nothing to host, nothing to babysit.</small>
-    </p>
-  </div>
-</section>
-
-<!-- 7. FIRST -->
-<section class="panel top plain" id="p7" aria-label="Get notified">
-  <div class="scrim"></div>
-  <div class="wrap">
-    <p class="kick rv" style="--i:0">06 — Launch</p>
-    <h2 class="giant rv" style="--i:1">First</h2>
-    <p class="line rv" style="--i:2">Be on the first spin.
-      <small>Architecture is written. The build is next. Leave a ping and you hear it launch.</small>
-    </p>
-    <form class="notify rv" style="--i:3" id="notify" novalidate>
-      <div class="field">
-        <label for="nname">Name</label>
-        <input id="nname" name="name" type="text" autocomplete="name" placeholder="Your name" maxlength="60">
-      </div>
-      <div class="field">
-        <label for="nemail">Email</label>
-        <input id="nemail" name="email" type="email" autocomplete="email" placeholder="you@example.com" required>
-      </div>
-      <button class="cta" type="submit" style="margin-top:6px">Hear it first</button>
-      <p class="fine">Saved on this device only. No accounts, no cookies, no spam. One email when the first station goes live.</p>
-    </form>
-    <div class="done-msg" id="donemsg" role="status">You are on the list. First spin, first ping.</div>
-    <a href="https://wearedogs.net" aria-label="This product was made by DOGS" style="display:block;width:fit-content">
-      <img class="badge" src="assets/made-by-dogs.png" alt="This product was made by DOGS" width="600" height="198">
-    </a>
-    <nav class="foot rv" style="--i:5" aria-label="Footer">
-      <a href="privacy.html">Privacy</a>
-      <a href="terms.html">Terms</a>
-      <a href="https://github.com/YEAHDOGS/radio">GitHub</a>
-    </nav>
-    <p class="status rv mono" style="--i:6">Status: scaffold · architecture written</p>
-  </div>
-</section>
-
-</div><!-- /stage -->
+<div id="yt" aria-hidden="true"></div>
 
 <script>
-(function(){
-  "use strict";
-  var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+"use strict";
+/* Point this at your Gin server. */
+const WS_URL = "wss://radio-api.dogs.red/ws";
 
-  /* reveal: observe panels (not clipped children), stagger children */
-  var panels = document.querySelectorAll(".panel");
-  if ("IntersectionObserver" in window && !reduced){
-    var io = new IntersectionObserver(function(es){
-      es.forEach(function(e){
-        if (e.isIntersecting){ e.target.classList.add("on"); io.unobserve(e.target); }
-      });
-    }, {threshold: 0.18});
-    panels.forEach(function(p){ io.observe(p); });
-  } else {
-    panels.forEach(function(p){ p.classList.add("on"); });
-  }
+const $ = id => document.getElementById(id);
+const body = document.body;
+const tunein = $("tunein"), tunelabel = $("tunelabel"), tag = $("tag"),
+      livetext = $("livetext"), art = $("art"), artwash = $("artwash"),
+      titleEl = $("title"), artistEl = $("artist"), mqtitle = $("mqtitle"),
+      progbar = $("progbar"), listenersEl = $("listeners"), lcount = $("lcount");
 
-  /* tuner demo: simulated broadcast */
-  var STATIONS = [
-    {freq: "88.1", name: "LOFI", tracks: ["Rain Loop No. 4", "Cassette Dreams", "2AM Diner"]},
-    {freq: "94.7", name: "RAP",  tracks: ["Boom Bap Forever", "Westside Story", "Verse Two"]},
-    {freq: "101.3", name: "HOUSE", tracks: ["Warehouse 303", "Four on the Floor", "Afterhours"]},
-    {freq: "106.9", name: "SOUL", tracks: ["Velvet Static", "Church Organ", "Slow Burn"]}
-  ];
-  var list = document.getElementById("stations");
-  var nowlabel = document.getElementById("nowlabel");
-  var tuneeq = document.getElementById("tuneeq");
-  var cur = 0, tick = 0, timer = null;
+let tuned = false, ws = null, retryMs = 1000, retryTimer = null;
+let player = null, playerReady = false, currentVideo = null;
+let state = null, progTimer = null;
 
-  STATIONS.forEach(function(s, i){
-    var b = document.createElement("button");
-    b.type = "button";
-    b.className = "station";
-    b.setAttribute("aria-pressed", i === 0 ? "true" : "false");
-    b.innerHTML = '<span class="freq mono">' + s.freq + '</span>' +
-                  '<span class="nm">' + s.name + '</span>' +
-                  '<span class="np" data-np></span>';
-    b.addEventListener("click", function(){ select(i); });
-    list.appendChild(b);
+function vibrate(ms){ try{ navigator.vibrate && navigator.vibrate(ms); }catch(e){} }
+
+/* ---------- YouTube IFrame Player API: audio in the background, no sign-in ---------- */
+function ensurePlayer(){
+  return new Promise(resolve => {
+    if (playerReady) return resolve();
+    if (window.YT && window.YT.Player){ createPlayer(resolve); return; }
+    const s = document.createElement("script");
+    s.src = "https://www.youtube.com/iframe_api";
+    window.onYouTubeIframeAPIReady = () => createPlayer(resolve);
+    document.head.appendChild(s);
   });
-  var btns = list.querySelectorAll(".station");
-
-  function paint(){
-    var s = STATIONS[cur];
-    var t = s.tracks[tick % s.tracks.length];
-    btns.forEach(function(b, i){
-      b.setAttribute("aria-pressed", i === cur ? "true" : "false");
-      b.querySelector("[data-np]").textContent = i === cur ? t : "";
-    });
-    nowlabel.textContent = "NOW PLAYING · " + s.freq + " " + s.name + " — " + t;
-  }
-  function select(i){
-    cur = i; tick = 0; paint(); restart();
-  }
-  function restart(){
-    if (timer) clearInterval(timer);
-    timer = setInterval(function(){
-      tick++; paint();
-    }, 18000);
-  }
-  document.addEventListener("keydown", function(e){
-    var p5 = document.getElementById("p5");
-    if (!p5.classList.contains("on")) return;
-    if (e.key === "ArrowRight"){ select((cur + 1) % STATIONS.length); }
-    else if (e.key === "ArrowLeft"){ select((cur + STATIONS.length - 1) % STATIONS.length); }
+}
+function createPlayer(done){
+  player = new YT.Player("yt", {
+    height: "2", width: "2",
+    playerVars: { autoplay: 1, controls: 0, disablekb: 1, rel: 0 },
+    events: { onReady: () => { playerReady = true; done && done(); } }
   });
-  paint(); restart();
+}
 
-  /* equalizer bars only animate while their panel is on-screen */
-  function watchEq(el){
-    if (!("IntersectionObserver" in window) || reduced) return;
-    new IntersectionObserver(function(es){
-      es.forEach(function(e){
-        el.style.animationPlayState = e.isIntersecting ? "running" : "paused";
-      });
-    }, {threshold: 0}).observe(el);
-  }
-  document.querySelectorAll(".eq").forEach(function(eq){
-    eq.querySelectorAll("i").forEach(watchEq);
-  });
-
-  /* honest notify: localStorage only */
-  var form = document.getElementById("notify");
-  var done = document.getElementById("donemsg");
-  try {
-    if (localStorage.getItem("radio-notify")){ form.style.display = "none"; done.classList.add("show"); }
-  } catch (e) {}
-  form.addEventListener("submit", function(e){
-    e.preventDefault();
-    var email = document.getElementById("nemail");
-    var v = (email.value || "").trim();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)){
-      email.focus();
-      email.style.borderColor = "var(--red)";
-      setTimeout(function(){ email.style.borderColor = ""; }, 1600);
-      return;
+/* ---------- UI states ---------- */
+function setTag(t){ tag.textContent = t; }
+function showIdle(){
+  body.classList.remove("tuning","tuned","live");
+  tunelabel.textContent = "LISTEN NOW";
+  livetext.textContent = "OFF AIR";
+}
+function showTuning(){
+  body.classList.add("tuning"); body.classList.remove("tuned","live");
+  tunelabel.textContent = "TUNING IN";
+  livetext.textContent = "CONNECTING";
+  setTag("Warming up the transmitter…");
+}
+function showLive(){
+  body.classList.add("tuned","live"); body.classList.remove("tuning");
+  tunelabel.textContent = "TAP TO LEAVE";
+  livetext.textContent = "LIVE";
+}
+function showOffAir(){
+  body.classList.add("tuned"); body.classList.remove("tuning","live");
+  livetext.textContent = "STANDBY";
+  setTag("He's not on the decks right now. Stay tuned — the second he hits play, you're in.");
+  stopPlayback();
+}
+function marquee(){
+  const inner = mqtitle.querySelector("span") || mqtitle;
+  mqtitle.classList.remove("scroll");
+  requestAnimationFrame(() => {
+    if (mqtitle.scrollWidth > mqtitle.clientWidth + 4){
+      const t = titleEl.textContent;
+      titleEl.innerHTML = "";
+      const a = document.createElement("span"); a.textContent = t + "\u2003\u2003";
+      const b = document.createElement("span"); b.textContent = t + "\u2003\u2003";
+      titleEl.append(a, b);
+      mqtitle.classList.add("scroll");
     }
-    try {
-      localStorage.setItem("radio-notify", JSON.stringify({
-        name: document.getElementById("nname").value.trim(),
-        email: v, at: new Date().toISOString()
-      }));
-    } catch (err) {}
-    form.style.display = "none";
-    done.classList.add("show");
-    done.scrollIntoView({block: "nearest"});
   });
-})();
+}
+
+/* ---------- playback ---------- */
+function applyNow(msg){
+  state = msg;
+  if (!msg || !msg.playing){ showOffAir(); return; }
+  const tr = msg.track || {};
+  /* reset marquee dupes */
+  titleEl.innerHTML = ""; 
+  const ts = document.createElement("span"); ts.textContent = tr.title || "Unknown track";
+  titleEl.appendChild(ts);
+  artistEl.textContent = (tr.artists || []).join(", ") || "Unknown artist";
+  if (tr.art){ art.src = tr.art; artwash.style.backgroundImage = 'url("' + tr.art + '")'; }
+  marquee();
+  showLive();
+  setTag("You're hearing exactly what he's hearing.");
+  if (playerReady){
+    if (msg.yt && msg.yt !== currentVideo){
+      currentVideo = msg.yt;
+      const start = Math.max(0, Math.floor((msg.progress_ms || 0) / 1000));
+      player.loadVideoById({ videoId: msg.yt, startSeconds: start });
+    } else if (player.getPlayerState() !== YT.PlayerState.PLAYING){
+      player.playVideo();
+    }
+  }
+  startProgress();
+}
+function stopPlayback(){
+  currentVideo = null;
+  try{ if (player && playerReady) player.stopVideo(); }catch(e){}
+  stopProgress();
+}
+function startProgress(){
+  stopProgress();
+  if (!state || !state.track || !state.track.duration_ms) return;
+  const t0 = Date.now(), p0 = state.progress_ms || 0, dur = state.track.duration_ms;
+  progTimer = setInterval(() => {
+    const pct = Math.min(100, ((p0 + (Date.now() - t0)) / dur) * 100);
+    progbar.style.width = pct + "%";
+    if (pct >= 100) stopProgress();
+  }, 500);
+}
+function stopProgress(){ if (progTimer){ clearInterval(progTimer); progTimer = null; } progbar.style.width = "0"; }
+
+/* ---------- websocket to the Gin server ---------- */
+function connect(){
+  showTuning();
+  let sock;
+  try{ sock = new WebSocket(WS_URL); }catch(e){ fail("Couldn't open the station socket."); return; }
+  ws = sock;
+  const timeout = setTimeout(() => { try{ sock.close(); }catch(e){} }, 8000);
+  sock.onopen = () => { clearTimeout(timeout); retryMs = 1000; };
+  sock.onmessage = ev => {
+    let msg; try{ msg = JSON.parse(ev.data); }catch(e){ return; }
+    if (msg.t === "now") applyNow(msg);
+    else if (msg.t === "count"){ lcount.textContent = msg.n; listenersEl.hidden = false; }
+    else if (msg.t === "offair") showOffAir();
+  };
+  const dead = () => {
+    clearTimeout(timeout);
+    if (!tuned){ fail("Couldn't reach the station — the Gin server isn't up yet."); return; }
+    livetext.textContent = "RECONNECTING";
+    setTag("Signal dropped. Hunting for it…");
+    stopPlayback();
+    body.classList.remove("live");
+    clearTimeout(retryTimer);
+    retryTimer = setTimeout(() => { if (tuned) connect(); }, retryMs);
+    retryMs = Math.min(retryMs * 2, 15000);
+  };
+  sock.onclose = dead; sock.onerror = dead;
+}
+function fail(msg){
+  tuned = false; ws = null;
+  showIdle();
+  setTag(msg);
+}
+function leave(){
+  tuned = false;
+  clearTimeout(retryTimer);
+  try{ ws && ws.close(); }catch(e){}
+  ws = null; stopPlayback();
+  listenersEl.hidden = true;
+  showIdle();
+  setTag("Tap in. You're on Jack Sparrow's aux — whatever he's playing, you're hearing it live.");
+}
+
+tunein.addEventListener("click", async () => {
+  vibrate(12);
+  if (tuned){ leave(); return; }
+  tuned = true;
+  await ensurePlayer();
+  connect();
+});
 </script>
 </body>
 </html>
