@@ -7,6 +7,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "deploy": "npm run build && npx --yes wrangler pages deploy dist --project-name radio --branch master",
     "test": "vitest",
     "test:ui": "vitest run --ui",
     "test:ui:coverage": "vitest run --ui --coverage",

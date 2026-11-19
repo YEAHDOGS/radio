@@ -1,33 +1,28 @@
-name: Deploy Cloudflare environments
+name: Deploy to Cloudflare Pages
 
+# DOGS RADIO is a static Pages app for now: no API and no D1, so there is no staging environment.
+# Pushes to master deploy straight to production. Add the D1 migration steps back when the API arrives.
 on:
   push:
-    branches: ['**']
-  pull_request:
     branches: [master]
-    types: [opened, synchronize, reopened]
 
 permissions:
   contents: read
 
 concurrency:
-  group: cloudflare-deploy-${{ github.event_name == 'push' && github.ref_name == 'master' && 'production' || 'staging' }}
+  group: cloudflare-deploy-production
   cancel-in-progress: false
 
 env:
   NODE_VERSION: "24"
   PROJECT_NAME: radio
-  DEPLOY_BRANCH: ${{ github.event.pull_request.head.ref || github.ref_name }}
 
 jobs:
   deploy:
-    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
-    name: ${{ github.ref_name == 'master' && github.event_name == 'push' && 'Production' || 'Staging preview' }}
+    name: Production
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-        with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: actions/setup-node@v6
         with:
           node-version: ${{ env.NODE_VERSION }}
@@ -36,23 +31,17 @@ jobs:
         run: if [ -f package-lock.json ]; then npm ci --no-audit --no-fund; else npm install --no-audit --no-fund; fi
       - name: Build
         run: npm run build
-      - name: Apply staging D1 migrations
-        if: github.event_name == 'pull_request' || github.ref_name != 'master'
-        working-directory: api
-        run: npx --yes wrangler d1 migrations apply "$PROJECT_NAME-staging" --remote --env preview --yes
+      - name: Check deploy credentials
+        id: credentials
+        run: |
+          if [ -n "$CLOUDFLARE_API_TOKEN" ]; then echo "ready=true" >> "$GITHUB_OUTPUT"; exit 0; fi
+          echo "::warning::CLOUDFLARE_API_TOKEN is not set, so this build was not deployed. Deploy by hand with: npm run deploy"
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-      - name: Apply production D1 migrations
-        if: github.event_name == 'push' && github.ref_name == 'master'
-        working-directory: api
-        run: npx --yes wrangler d1 migrations apply "$PROJECT_NAME-production" --remote --env production --yes
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       - name: Deploy Pages
-        working-directory: api
-        run: npx --yes wrangler pages deploy ../dist --project-name "$PROJECT_NAME" --branch "$DEPLOY_BRANCH"
+        if: steps.credentials.outputs.ready == 'true'
+        # Runs from the repo root so Wrangler ignores api/, which has no live API or database yet
+        run: npx --yes wrangler pages deploy dist --project-name "$PROJECT_NAME" --branch master
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

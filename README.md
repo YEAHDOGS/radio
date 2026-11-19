@@ -44,7 +44,11 @@ Never use production data in local development or staging. Native apps call Clou
 
 Configure separate staging and production D1 and R2 bindings. Set a least-privilege Cloudflare API token and account ID as GitHub repository secrets; do not commit credentials. Fork pull requests cannot access deployment secrets and are not deployed.
 
-### Before the first deploy
+### Deploying today
+
+DOGS RADIO has no API or D1 database yet, so it ships as a static Pages app. The Pages project `radio` serves `radio.dogs.red`. Pushes to `master` build and upload the site through `deploy-cloudflare.yml` once `CLOUDFLARE_API_TOKEN` (Pages edit access) and `CLOUDFLARE_ACCOUNT_ID` are set as repository secrets; until then the workflow builds, skips the upload and says so. `npm run deploy` uploads from your machine with your own Wrangler login.
+
+### Before the first deploy with an API
 
 Create a Pages Direct Upload project with `npx --yes wrangler pages project create` and use the `name` from `api/wrangler.jsonc`; select `master` as its production branch. Direct Upload keeps GitHub Actions as the deployment path. Create separate staging and production D1 databases, then replace the matching database ID placeholders in `api/wrangler.jsonc`. Add `CLOUDFLARE_API_TOKEN` (Pages and D1 edit access) and `CLOUDFLARE_ACCOUNT_ID` as GitHub repository secrets. The generated `deploy-cloudflare.yml` applies the environment's SQL migrations and deploys previews for branch pushes and pull requests; pushes to `master` deploy production.
 

@@ -41,9 +41,8 @@ Never write the owner's name, pseudonym, alias, or any personal information anyw
 
 ## Git workflow
 - `master` is the root, default and production branch, here and in every app made from this template. There is no `main` branch: never create one, push to one, target one with a pull request, or reference one in workflows, docs or Cloudflare settings.
-- Start every task from an up-to-date `master` unless told to build on another branch.
-- Branch per task, named `[agent]-[month]-[feature-name]`: your agent name in lowercase, the two-digit month, and a short kebab-case feature name. Example: `codex-10-tauri-shell`.
-- Commit to your feature branch as you go, push the branch, and open a pull request into master once the task is verified. Merging is done through review.
+- This project is greenfield: commit and push straight to `master`. No feature branches and no pull requests until told otherwise.
+- Start every task from an up-to-date `master`.
 - Generated data, background-script output and local builds belong in `.gitignore`.
 
 ## Stack
