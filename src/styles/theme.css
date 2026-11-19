@@ -1,0 +1,30 @@
+/* Theme: every color, theme token and custom breakpoint variant lives here, never in components.
+   Each --color-* token becomes Tailwind utilities, e.g. --color-neon-red -> text-neon-red, bg-neon-red/20.
+   Literal copies of these colors exist only where CSS variables can't reach: src/styles/legacy-fallback.css
+   (Chrome 40 page) and the theme-color meta in index.html. Keep them in step. */
+
+/* Short screens (phones on their side, small phones, squat displays): compact layout variant, e.g. short:hidden */
+@custom-variant short (@media (max-height: 640px));
+/* Squat screens (small laptop windows, phones under about 760px tall): trim secondary text, e.g. squat:max-md:hidden.
+   Sits between short: and a full-height screen. Used by the feature cards in src/App.svelte. */
+@custom-variant squat (@media (max-height: 760px));
+/* Landscape screens (4:3 and wider), plus any screen under 900px tall, which has no room to stack the pitch
+   above the dial: the two sit side by side instead, e.g. wide:sm:grid-cols-2. Used by the hero in src/App.svelte. */
+@custom-variant wide {
+  @media (min-aspect-ratio: 4/3), (max-height: 900px) {
+    @slot;
+  }
+}
+/* Ultra-wide displays (21:9 and wider): spread content sideways instead of leaving empty bleed, e.g. ultrawide:grid-cols-4 */
+@custom-variant ultrawide (@media (min-aspect-ratio: 21/9) and (min-width: 1536px));
+
+/* Batman Beyond inspired neon-red / dark palette. Used across src/App.svelte and src/app.css. */
+@theme {
+  --color-neon-red: #ff3344;
+  /* neon-red at 15%, literal so it works without color-mix() (Chrome < 111): scrollbar track edges in app.css */
+  --color-neon-red-faint: rgb(255 51 68 / 15%);
+  --color-app: #050508;
+  --color-card: #0e0e12;
+  --color-card-hover: #14141a;
+  --color-muted: #8e8e9f;
+}

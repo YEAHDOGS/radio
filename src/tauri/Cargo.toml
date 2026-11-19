@@ -1,0 +1,16 @@
+[package]
+name = "dogs-app"
+version = "1.0.0"
+description = "__APP_DESCRIPTION__"
+authors = ["DOGS"]
+edition = "2021"
+
+[lib]
+name = "dogs_app_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }

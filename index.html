@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="apple-touch-icon" href="/favicon.svg" />
+  <link rel="manifest" href="/site.webmanifest" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#050508" />
+  <title>DOGS RADIO · What ya listenin to?</title>
+  <meta name="description"
+    content="Hand-picked stations on the air 24/7, in sync for everyone. Tune in with the streaming service you already use, or free on YouTube. On air soon." />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="DOGS RADIO" />
+  <meta property="og:title" content="DOGS RADIO · What ya listenin to?" />
+  <meta property="og:description"
+    content="Hand-picked stations on the air 24/7, in sync for everyone. On air soon." />
+</head>
+
+<body class="bg-app text-white">
+  <div id="app"></div>
+
+  <!-- Static fallback for browsers too old to run the app (Potato Target: Chrome 40), and for no-JS visitors.
+       Plain HTML only. Styles: src/styles/legacy-fallback.css. Text mirrors src/App.svelte. -->
+  <div id="legacy-fallback" class="legacy-fallback">
+    <img class="legacy-fallback__logo" src="/src/assets/dogs-logo-cropped.png" alt="DOGS dog head logo" width="540"
+      height="534" />
+    <div class="legacy-fallback__text">
+      <h1 class="legacy-fallback__title">DOGS</h1>
+      <p class="legacy-fallback__tagline">What ya listenin to? Hand-picked stations on the air 24/7, in sync for everyone. Tune in with the streaming service you already use, or free on YouTube. On air soon.</p>
+      <a class="legacy-fallback__badge" href="https://dogs.red" target="_blank" rel="noopener noreferrer">
+        <img src="/src/assets/made-by-dogs-small.png" alt="This product was made by DOGS" width="480" height="159" />
+      </a>
+    </div>
+  </div>
+  <!-- Must stay ES5: this is the only script the Potato Target runs. Hides the fallback before first paint on
+       browsers that can run the app (CSS cascade layers = the Tailwind v4 floor, see APP_CSS_TARGET in vite.config.js),
+       and brings it back if the app crashes before rendering anything. -->
+  <script>
+    (function () {
+      var fallback = document.getElementById('legacy-fallback');
+      if (!window.CSSLayerBlockRule) return;
+      fallback.setAttribute('hidden', '');
+      window.addEventListener('error', function () {
+        if (!document.getElementById('app').firstChild) fallback.removeAttribute('hidden');
+      });
+    })();
+  </script>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+
+</html>

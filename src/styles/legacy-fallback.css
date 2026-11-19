@@ -1,0 +1,111 @@
+/* Static fallback page from index.html, shown only on browsers too old for the app (Potato Target: Chrome 40).
+   This CSS still passes through Lightning CSS at APP_CSS_TARGET, which merges longhands into newer shorthands,
+   so keep it plain: no custom properties (colors are literal copies of the @theme tokens in theme.css), dvh, clamp(),
+   flex gap, alpha colors, or all-four top/right/bottom/left (that becomes `inset`, which Chrome 40 can't read). */
+
+.legacy-fallback {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  box-sizing: border-box;
+  background-color: #050508; /* --color-app */
+  color: #ffffff;
+  text-align: center;
+  font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+.legacy-fallback[hidden] {
+  display: none;
+}
+
+.legacy-fallback__logo {
+  width: 50%;
+  max-width: 220px;
+  height: auto;
+}
+
+.legacy-fallback__title {
+  margin: 16px 0 8px;
+  font-size: 32px;
+  letter-spacing: 2px;
+}
+
+.legacy-fallback__tagline {
+  max-width: 480px;
+  margin: 0 0 24px;
+  font-size: 16px;
+  line-height: 1.4;
+  color: #8e8e9f; /* --color-muted */
+}
+
+.legacy-fallback__badge img {
+  display: block;
+  width: auto;
+  height: 36px;
+  margin: 0 auto;
+}
+
+/* Tablet & desktop */
+@media (min-width: 768px) {
+  .legacy-fallback__logo {
+    max-width: 300px;
+  }
+
+  .legacy-fallback__title {
+    font-size: 48px;
+  }
+
+  .legacy-fallback__tagline {
+    font-size: 20px;
+  }
+}
+
+/* TV & ultra-wide */
+@media (min-width: 1536px) {
+  .legacy-fallback__logo {
+    max-width: 440px;
+  }
+
+  .legacy-fallback__title {
+    font-size: 80px;
+  }
+
+  .legacy-fallback__tagline {
+    max-width: 800px;
+    font-size: 32px;
+  }
+
+  .legacy-fallback__badge img {
+    height: 64px;
+  }
+}
+
+/* Phones in landscape: logo beside the text so nothing is cropped */
+@media (orientation: landscape) and (max-height: 500px) {
+  .legacy-fallback {
+    flex-direction: row;
+    text-align: left;
+  }
+
+  .legacy-fallback__logo {
+    width: auto;
+    height: 60%;
+    margin-right: 24px;
+  }
+
+  .legacy-fallback__title {
+    margin-top: 0;
+  }
+
+  .legacy-fallback__badge img {
+    margin: 0;
+  }
+}

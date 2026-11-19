@@ -1,0 +1,106 @@
+name: Build apps
+
+on:
+  workflow_dispatch:
+    inputs:
+permissions:
+  contents: read
+
+concurrency:
+  group: build-apps-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "24"
+
+jobs:
+  web:
+    name: Web
+    if: contains(fromJSON('["web","android","ios"]'), 'web')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - name: Install
+        run: if [ -f package-lock.json ]; then npm ci --no-audit --no-fund; else npm install --no-audit --no-fund; fi
+      - run: npm run build
+      - uses: actions/upload-artifact@v7
+        with:
+          name: web
+          path: dist
+          if-no-files-found: error
+
+  native:
+    name: ${{ matrix.platform }}
+    if: contains(fromJSON('__PLATFORMS_JSON__'), matrix.platform)
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: windows
+            os: windows-latest
+            args: --bundles msi,nsis
+            mobile: ''
+          - platform: linux
+            os: ubuntu-24.04
+            args: --bundles deb,rpm,appimage
+            mobile: ''
+          - platform: macos
+            os: macos-15
+            args: --bundles dmg,app
+            mobile: ''
+          - platform: android
+            os: ubuntu-24.04
+            args: --apk
+            mobile: android
+          - platform: ios
+            os: macos-15
+            args: ''
+            mobile: ios
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - name: Install
+        run: if [ -f package-lock.json ]; then npm ci --no-audit --no-fund; else npm install --no-audit --no-fund; fi
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install Android Rust target
+        if: matrix.platform == 'android'
+        run: rustup target add aarch64-linux-android armv7-linux-androideabi i686-linux-android x86_64-linux-android
+      - name: Install iOS Rust targets
+        if: matrix.platform == 'ios'
+        run: rustup target add aarch64-apple-ios x86_64-apple-ios aarch64-apple-ios-sim
+      - name: Install Linux dependencies
+        if: matrix.platform == 'linux'
+        run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential curl wget file libxdo-dev libssl-dev librsvg2-dev patchelf
+      - name: Install Android tools
+        if: matrix.platform == 'android'
+        uses: android-actions/setup-android@v3
+      - name: Initialize mobile project
+        if: matrix.platform == 'android' || matrix.platform == 'ios'
+        run: npx tauri ${{ matrix.platform }} init
+      - name: Build native app
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          args: ${{ matrix.args }}
+          mobile: ${{ matrix.mobile }}
+      - uses: actions/upload-artifact@v7
+        with:
+          name: ${{ matrix.platform }}
+          path: |
+            src/tauri/target/**/release/bundle/**
+            src/tauri/gen/**/build/outputs/**/*
+            src/tauri/gen/apple/build/**/**/*.ipa
+            src/tauri/gen/apple/build/**/**/*.app
+          if-no-files-found: error

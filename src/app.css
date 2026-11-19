@@ -1,0 +1,61 @@
+@import "tailwindcss";
+/* Colors, theme tokens and custom variants (short:, ultrawide:) */
+@import "./styles/theme.css";
+@import "./styles/legacy-fallback.css";
+
+body {
+  margin: 0;
+  padding: 0;
+  width: 100vw;
+  /* dvh fills correctly on mobile even with the address bar visible; vh is the fallback */
+  min-height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-drag: none;
+}
+
+/* ── Custom Global Scrollbars (Batman Beyond Theme: Black, White, Red) ── */
+
+/* Webkit browsers (Chrome, Edge, Safari, Opera) */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-app);
+  border-left: 1px solid var(--color-neon-red-faint);
+  border-top: 1px solid var(--color-neon-red-faint);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-neon-red);
+  border: 2px solid var(--color-app);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-white);
+  border-color: var(--color-neon-red);
+}
+
+/* Firefox standard styling */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-neon-red) var(--color-app);
+}
+
+/* Hide scrollbars but keep scrolling functionality */
+@utility scrollbar-none {
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
